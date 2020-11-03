@@ -80,17 +80,17 @@ class MultiClassLogisticRegression():
         return np.mean(self.predict_classes(X) == y)
 
 
-lr = MultiClassLogisticRegression()
-lr.fit(X_train, y_train)
-y_pred = lr.predict_classes(X_test)
-print(lr.accuracy(X_test, y_test))
-
-lr_ridge = MultiClassLogisticRegression()
-lr_ridge.fit(X_train, y_train, lamb = 0.001)
-y_pred = lr_ridge.predict_classes(X_test)
-print(lr_ridge.accuracy(X_test, y_test))
-
 if __name__ == '__main__':
+    lr = MultiClassLogisticRegression()
+    lr.fit(X_train, y_train)
+    y_pred = lr.predict_classes(X_test)
+    print(lr.accuracy(X_test, y_test))
+
+    lr_ridge = MultiClassLogisticRegression()
+    lr_ridge.fit(X_train, y_train, lamb = 0.001)
+    y_pred = lr_ridge.predict_classes(X_test)
+    print(lr_ridge.accuracy(X_test, y_test))
+
 
     #plot cost function
     cost = lr.cost
@@ -101,7 +101,7 @@ if __name__ == '__main__':
     plt.show()
 
 
-    See how the number of epochs affects the accuray score
+    #See how the number of epochs affects the accuray score
     epochs = np.linspace(10, 1000, 100)
 
     acc = []
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     plt.ylabel('Accuracy')
     plt.show()
 
-    see how accuracy changes with learning rate
+    #see how accuracy changes with learning rate
     learning_rate = np.linspace(0.0001, 0.1, 11)
     print(learning_rate)
     acc = []
