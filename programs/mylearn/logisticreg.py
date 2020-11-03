@@ -67,11 +67,7 @@ class MultiClassLogisticRegression():
                 xi = X[ind]
                 yi = y[ind]
                 p = self.p(xi)
-                if lamb == 0:
-                    gradient = np.dot((yi-p).T, xi)
-                else:
-                    gradient = np.dot((yi-p).T, xi) + 2*lamb*self.theta
-
+                gradient = np.dot((yi-p).T, xi) + 2*lamb*self.theta
                 self.theta += eta * gradient
 
     def predict(self, X):
@@ -94,44 +90,45 @@ lr_ridge.fit(X_train, y_train, lamb = 0.001)
 y_pred = lr_ridge.predict_classes(X_test)
 print(lr_ridge.accuracy(X_test, y_test))
 
+if __name__ == '__main__':
 
-# #plot cost function
-# cost = lr.cost
-# plt.plot(np.arange(len(cost)), cost)
-# plt.title('Cost function as a function of epoch')
-# plt.xlabel('epochs')
-# plt.ylabel('cost function')
-# plt.show()
+    #plot cost function
+    cost = lr.cost
+    plt.plot(np.arange(len(cost)), cost)
+    plt.title('Cost function as a function of epoch')
+    plt.xlabel('epochs')
+    plt.ylabel('cost function')
+    plt.show()
 
 
-#See how the number of epochs affects the accuray score
-# epochs = np.linspace(10, 1000, 100)
-#
-# acc = []
-# for epoch in epochs:
-#     lr = MultiClassLogisticRegression()
-#     lr.fit(X_train, y_train, int(epoch))
-#     y_pred = lr.predict_classes(X_test)
-#     acc.append(lr.accuracy(X_test, y_test))
-#
-# plt.plot(epochs, acc)
-# plt.title('Accuracy as a function of epochs')
-# plt.xlabel('Number of epochs')
-# plt.ylabel('Accuracy')
-# plt.show()
+    See how the number of epochs affects the accuray score
+    epochs = np.linspace(10, 1000, 100)
 
-#see how accuracy changes with learning rate
-# learning_rate = np.linspace(0.0001, 0.1, 11)
-# print(learning_rate)
-# acc = []
-# for learn in learning_rate:
-#     lr = MultiClassLogisticRegression()
-#     lr.fit(X_train, y_train, epochs=1000, M=128, eta=int(learn))
-#     y_pred = lr.predict_classes(X_test)
-#     acc.append(lr.accuracy(X_test, y_test))
-#
-# plt.plot(epochs, acc)
-# plt.title('Accuracy as a function of epochs')
-# plt.xlabel('Number of epochs')
-# plt.ylabel('Accuracy')
-# plt.show()
+    acc = []
+    for epoch in epochs:
+        lr = MultiClassLogisticRegression()
+        lr.fit(X_train, y_train, int(epoch))
+        y_pred = lr.predict_classes(X_test)
+        acc.append(lr.accuracy(X_test, y_test))
+
+    plt.plot(epochs, acc)
+    plt.title('Accuracy as a function of epochs')
+    plt.xlabel('Number of epochs')
+    plt.ylabel('Accuracy')
+    plt.show()
+
+    see how accuracy changes with learning rate
+    learning_rate = np.linspace(0.0001, 0.1, 11)
+    print(learning_rate)
+    acc = []
+    for learn in learning_rate:
+        lr = MultiClassLogisticRegression()
+        lr.fit(X_train, y_train, epochs=1000, M=128, eta=int(learn))
+        y_pred = lr.predict_classes(X_test)
+        acc.append(lr.accuracy(X_test, y_test))
+
+    plt.plot(epochs, acc)
+    plt.title('Accuracy as a function of epochs')
+    plt.xlabel('Number of epochs')
+    plt.ylabel('Accuracy')
+    plt.show()
