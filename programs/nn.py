@@ -1,0 +1,103 @@
+import numpy as np
+
+class Layer:
+
+    def __init__(self,
+                 n_inputs,
+                 n_nodes,
+                 weights = None,
+                 bias    = None,
+                 activation_func = lambda x: 1/(1 + np.exp(-x))):
+
+        """
+        Args:
+
+            n_inputs (int)             - number of inputs
+
+            n_nodes  (int)             - number of nodes/outputs
+
+            weights  (numpy.ndarray)   - matrix of weights
+                                         must have shape (n_nodes, n_inputs)
+
+            bias     (numpy.ndarray)   - column vector of biases
+                                         must have shape (n_nodes, 1)
+
+            activation_func (callable) - activation function of nodes
+                                         default is the sigmoid function
+        """
+
+        self.n_inputs        = n_inputs
+        self.n_nodes         = n_nodes
+        self.weights         = weights
+        self.bias            = bias
+        self.activation_func = activation_func
+
+    def set_weights(self):
+        self.weights = np.random.randn(self.n_inputs, self.n_outputs)
+        return self.weights
+
+    def set_bias(self):
+        self.bias = 0.01*np.ones((n_nodes, 1))
+        return self.bias
+
+class NeuralNetwork:
+
+    def __init__(self,
+                 n_inputs,
+                 output_func,
+                 layers           = None,
+                 n_nodes          = None,
+                 weights          = None,
+                 activation_funcs = None):
+
+        """
+        Args:
+
+            n_inputs    (int)                       - the number of inputs of the neural network
+
+            output_func (callable)                  - the output function of the neural network
+
+            layers      (array-like, Layer)         - array/list of Layer objects
+
+            n_nodes     (array-like, int)           - array/list of the number of nodes
+                                                      the first element is the number of nodes in the first layer
+                                                      the second element is the number of nodes in the second layer, and so on
+
+            activation_funcs (array-like, callable) - array/list of functions
+                                                      the first element is the activation function of the first layer
+                                                      the second element is the activation function of the second layer, and so on
+        """
+
+        self.n_inputs    = n_inputs
+        self.output_func = output_func
+        self.layers      = np.array(layers)
+        self.n_nodes     = np.array(n_nodes)
+
+        if n_nodes is not None:
+            layers = []
+            for n_node in n_nodes:
+                layer = Layer(n_inputs, n_node)
+                layers.append(layer)
+            self.layers = np.array(layers)
+
+        if self.layers.any():
+            print('yes')
+            self.weights = self.layers.weights
+            self.bias    = self.layers.bias
+
+    def set_weights(self):
+        self.weights = self.layers.set_weights()
+
+    def set_bias(self):
+        self.bias = self.layers.set_bias()
+
+    def feed_forward(self, X):
+        weights = self.weights
+        bias    = self.bias
+
+        a = X
+        for l, layer in enumerate(self.layers):
+            z = weights[l, :, :]@a + bias[l, :]
+            a = layer.activation_func(z)
+
+        return self.output_func(a)

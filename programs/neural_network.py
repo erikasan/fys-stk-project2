@@ -1,11 +1,14 @@
 import numpy as np
 
+# Each node in the first hidden layer has a number of weights
+# equal to the number of inputs
+
 class NeuralNetwork:
 
     def __init__(self,
                  W = None,
                  b = None,
-                 activation_func = None,
+                 activation_func = lambda x: 1/(1 + np.exp(-x)),
                  output_func = None):
         """
         Args:
@@ -16,6 +19,7 @@ class NeuralNetwork:
                                          b must have shape (num_nodes, num_hidden_layers)
 
             activation_func (callable) - activation function of the nodes in the hidden layers
+                                         default activation function is the sigmoid function
 
             output_func (callable)     - output function. */()&¤#¤%#""&¤¤%#
         """
@@ -57,6 +61,7 @@ class NeuralNetwork:
 
         W = self.W
         b = self.b
+        activation_func = self.activation_func
         num_hidden_layers = W.shape[2]
 
         a = X
