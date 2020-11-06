@@ -32,12 +32,12 @@ class Layer:
 
 
     def set_weights(self):
-        self.weights = np.random.randn(self.n_inputs, self.n_outputs)
+        self.weights = np.random.randn(self.n_nodes, self.n_inputs)
         return self.weights
 
 
     def set_bias(self):
-        self.bias = 0.01*np.ones((n_nodes, 1))
+        self.bias = 0.01*np.ones((self.n_nodes, 1))
         return self.bias
 
 class NeuralNetwork:
@@ -47,6 +47,7 @@ class NeuralNetwork:
         n_inputs    (int)                       - the number of inputs of the neural network
 
         output_func (callable)                  - the output function of the neural network
+                                                  default is the softmax function
 
         layers      (array-like, Layer)         - array/list of Layer objects
 
@@ -61,13 +62,11 @@ class NeuralNetwork:
 
     def __init__(self,
                  n_inputs,
-                 output_func,
+                 output_func = lambda z: np.exp(z)/np.sum(np.exp(z)),
                  layers           = None,
                  n_nodes          = None,
                  weights          = None,
                  activation_funcs = None):
-
-
 
         self.n_inputs    = n_inputs
         self.output_func = output_func
@@ -81,9 +80,8 @@ class NeuralNetwork:
                 layers.append(layer)
             self.layers = np.array(layers)
 
-        if self.layers.any():
-            self.weights = self.layers.weights
-            self.bias    = self.layers.bias
+        if activation_funcs is not None:
+            pass
 
     def set_weights(self):
         weights      = [layer.set_weights() for layer in self.layers]
@@ -95,13 +93,17 @@ class NeuralNetwork:
 
 
     def feed_forward(self, X):
+        X = np.array(X)
+
+        if self.layers is None:
+            return output_func(X)
 
         weights = self.weights
         bias    = self.bias
 
         a = X
         for l, layer in enumerate(self.layers):
-            z = weights[l, :, :]@a + bias[l, :]
+            z = weights[l]@a + bias[l]
             a = layer.activation_func(z)
 
         return self.output_func(a)
