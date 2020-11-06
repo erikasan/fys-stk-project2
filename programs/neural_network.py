@@ -1,80 +1,107 @@
 import numpy as np
 
-# Each node in the first hidden layer has a number of weights
-# equal to the number of inputs
+class Layer:
+    """
+    Args:
+
+        n_inputs (int)             - number of inputs
+
+        n_nodes  (int)             - number of nodes/outputs
+
+        weights  (numpy.ndarray)   - matrix of weights
+                                     must have shape (n_nodes, n_inputs)
+
+        bias     (numpy.ndarray)   - column vector of biases
+                                     must have shape (n_nodes, 1)
+
+        activation_func (callable) - activation function of nodes
+                                     default is the sigmoid function
+    """
+    def __init__(self,
+                 n_inputs,
+                 n_nodes,
+                 weights = None,
+                 bias    = None,
+                 activation_func = lambda x: 1/(1 + np.exp(-x))):
+
+        self.n_inputs        = n_inputs
+        self.n_nodes         = n_nodes
+        self.weights         = weights
+        self.bias            = bias
+        self.activation_func = activation_func
+
+
+    def set_weights(self):
+        self.weights = np.random.randn(self.n_inputs, self.n_outputs)
+        return self.weights
+
+
+    def set_bias(self):
+        self.bias = 0.01*np.ones((n_nodes, 1))
+        return self.bias
 
 class NeuralNetwork:
+    """
+    Args:
+
+        n_inputs    (int)                       - the number of inputs of the neural network
+
+        output_func (callable)                  - the output function of the neural network
+
+        layers      (array-like, Layer)         - array/list of Layer objects
+
+        n_nodes     (array-like, int)           - array/list of the number of nodes
+                                                  the first element is the number of nodes in the first layer
+                                                  the second element is the number of nodes in the second layer, and so on
+
+        activation_funcs (array-like, callable) - array/list of functions
+                                                  the first element is the activation function of the first layer
+                                                  the second element is the activation function of the second layer, and so on
+    """
 
     def __init__(self,
-                 W = None,
-                 b = None,
-                 activation_func = lambda x: 1/(1 + np.exp(-x)),
-                 output_func = None):
-        """
-        Args:
-            W (np.ndarray)             - multidimensional array of weights.
-                                         W must have shape (num_nodes, num_weights_per_node, num_hidden_layers)
+                 n_inputs,
+                 output_func,
+                 layers           = None,
+                 n_nodes          = None,
+                 weights          = None,
+                 activation_funcs = None):
 
-            b (np.ndarray)             - multidimensional array of biases
-                                         b must have shape (num_nodes, num_hidden_layers)
 
-            activation_func (callable) - activation function of the nodes in the hidden layers
-                                         default activation function is the sigmoid function
 
-            output_func (callable)     - output function. */()&¤#¤%#""&¤¤%#
-        """
-
-        self.W = W
-        self.b = b
-        self.activation_func = activation_func
+        self.n_inputs    = n_inputs
         self.output_func = output_func
+        self.layers      = np.array(layers)
+        self.n_nodes     = np.array(n_nodes)
 
-    def set_weights(self,
-                    num_nodes,
-                    num_weights_per_node,
-                    num_hidden_layers):
+        if n_nodes is not None:
+            layers = []
+            for n_node in n_nodes:
+                layer = Layer(n_inputs, n_node)
+                layers.append(layer)
+            self.layers = np.array(layers)
 
-        self.W = np.random.randn(num_nodes,
-                                 num_weights_per_node,
-                                 num_hidden_layers)
+        if self.layers.any():
+            self.weights = self.layers.weights
+            self.bias    = self.layers.bias
 
+    def set_weights(self):
+        weights      = [layer.set_weights() for layer in self.layers]
+        self.weights = np.array(weights)
 
-    def set_biases(self,
-                   num_nodes,
-                   num_hidden_layers):
+    def set_bias(self):
+        bias      = [layer.set_bias() for layer in self.layers]
+        self.bias = np.array(bias)
 
-        self.b = 0.01*np.ones((num_nodes, num_hidden_layers))
-
-
-    def set_activation_function(self,
-                                activation_func):
-
-        self.activation_func = activation_func
-
-
-    def set_output_function(self,
-                            output_func):
-
-        self.output_func = output_func
 
     def feed_forward(self, X):
 
-        W = self.W
-        b = self.b
-        activation_func = self.activation_func
-        num_hidden_layers = W.shape[2]
+        weights = self.weights
+        bias    = self.bias
 
         a = X
-        for l in range(num_hidden_layers):
-            z = W[:, :, l]@a + b[:, l]
-            a = activation_func(z)
+        for l, layer in enumerate(self.layers):
+            z = weights[l, :, :]@a + bias[l, :]
+            a = layer.activation_func(z)
 
-        return output_func(a)
-
-
-    def return_model(self):
-        return self.feed_forward
-
-
-    def back_propagation(self):
-        pass
+        return self.output_func(a)
