@@ -62,7 +62,7 @@ class NeuralNetwork:
 
     def __init__(self,
                  n_inputs,
-                 output_func = lambda z: np.exp(z)/np.sum(np.exp(z)),
+                 output_func      = lambda z: np.exp(z)/np.sum(np.exp(z)),
                  layers           = None,
                  n_nodes          = None,
                  weights          = None,
