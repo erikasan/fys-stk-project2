@@ -62,6 +62,7 @@ class NeuralNetwork:
 
     def __init__(self,
                  n_inputs,
+                 n_outputs,
                  output_func      = lambda z: np.exp(z)/np.sum(np.exp(z)),
                  layers           = None,
                  n_nodes          = None,
@@ -69,15 +70,18 @@ class NeuralNetwork:
                  activation_funcs = None):
 
         self.n_inputs    = n_inputs
+        self.n_outputs   = n_outputs
         self.output_func = output_func
         self.layers      = np.array(layers)
         self.n_nodes     = np.array(n_nodes)
 
         if n_nodes is not None:
             layers = []
-            for n_node in n_nodes:
-                layer = Layer(n_inputs, n_node)
-                layers.append(layer)
+            layers.append(Layer(n_inputs, n_nodes[0]))   # First hidden layer
+            for i in range(1, len(n_nodes)):
+                layer = Layer(n_nodes[i-1], n_nodes[i])
+                layers.append(layer)                     # All other hidden layers
+            layers.append(Layer(n_nodes[-1], n_outputs)) # Output layer
             self.layers = np.array(layers)
 
         if activation_funcs is not None:
