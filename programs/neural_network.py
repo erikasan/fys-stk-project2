@@ -114,8 +114,6 @@ class NeuralNetwork:
 
         assert X.shape[0] == self.n_inputs, f'input vector must have {self.n_inputs} elements'
 
-        X.shape = (X.shape[0], 1)
-
         if self.layers is None:
             return output_func(X)
 
