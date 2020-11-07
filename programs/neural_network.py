@@ -20,15 +20,19 @@ class Layer:
     def __init__(self,
                  n_inputs,
                  n_nodes,
-                 weights = None,
-                 bias    = None,
-                 activation_func = lambda x: 1/(1 + np.exp(-x))):
+                 weights         = None,
+                 bias            = None,
+                 activation_func = None):
 
         self.n_inputs        = n_inputs
         self.n_nodes         = n_nodes
         self.weights         = weights
         self.bias            = bias
-        self.activation_func = activation_func
+
+        if activation_func is None:
+            self.activation_func = lambda x: 1/(1 + np.exp(-x))
+        else:
+            self.activation_func = activation_func
 
 
     def set_weights(self):
@@ -45,6 +49,8 @@ class NeuralNetwork:
     Args:
 
         n_inputs    (int)                       - the number of inputs of the neural network
+
+        n_outputs   (int)                       - the number of outputs of the neural network
 
         output_func (callable)                  - the output function of the neural network
                                                   default is the softmax function
@@ -63,7 +69,7 @@ class NeuralNetwork:
     def __init__(self,
                  n_inputs,
                  n_outputs,
-                 output_func      = lambda z: np.exp(z)/np.sum(np.exp(z)),
+                 output_func = lambda z: np.exp(z)/np.sum(np.exp(z), axis = 0, keepdims = True),
                  layers           = None,
                  n_nodes          = None,
                  weights          = None,
@@ -76,28 +82,39 @@ class NeuralNetwork:
         self.n_nodes     = np.array(n_nodes)
 
         if n_nodes is not None:
+
+            if activation_funcs is None:
+                activation_funcs = len(n_nodes)*[None]
+
             layers = []
-            layers.append(Layer(n_inputs, n_nodes[0]))   # First hidden layer
-            for i in range(1, len(n_nodes)):
-                layer = Layer(n_nodes[i-1], n_nodes[i])
-                layers.append(layer)                     # All other hidden layers
-            layers.append(Layer(n_nodes[-1], n_outputs)) # Output layer
+
+            first_layer = Layer(n_inputs = n_inputs, n_nodes = n_nodes[0], activation_func = activation_funcs[0])
+            layers.append(first_layer)
+
+            for i in range(1, len(n_nodes)):                                                    # All other hidden layers
+                layer = Layer(n_inputs = n_nodes[i-1], n_nodes = n_nodes[i], activation_func = activation_funcs[i])
+                layers.append(layer)
+
+            last_layer = Layer(n_inputs = n_nodes[-1], n_nodes = n_outputs, activation_func = self.output_func)
+            layers.append(last_layer)
+
             self.layers = np.array(layers)
 
-        if activation_funcs is not None:
-            pass
 
     def set_weights(self):
-        weights      = [layer.set_weights() for layer in self.layers]
-        self.weights = np.array(weights)
+        self.weights = [layer.set_weights() for layer in self.layers]
+
 
     def set_bias(self):
-        bias      = [layer.set_bias() for layer in self.layers]
-        self.bias = np.array(bias)
+        self.bias = [layer.set_bias() for layer in self.layers]
 
 
     def feed_forward(self, X):
         X = np.array(X)
+
+        assert X.shape[0] == self.n_inputs, f'input vector must have {self.n_inputs} elements'
+
+        X.shape = (X.shape[0], 1)
 
         if self.layers is None:
             return output_func(X)
@@ -110,4 +127,4 @@ class NeuralNetwork:
             z = weights[l]@a + bias[l]
             a = layer.activation_func(z)
 
-        return self.output_func(a)
+        return a
