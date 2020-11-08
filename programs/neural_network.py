@@ -17,17 +17,18 @@ class Layer:
         activation_func (callable) - activation function of nodes
                                      default is the sigmoid function
     """
+
     def __init__(self,
                  n_inputs,
                  n_nodes,
-                 weights         = None,
-                 bias            = None,
-                 activation_func = None):
+                 weights         =None,
+                 bias            =None,
+                 activation_func =None):
 
-        self.n_inputs        = n_inputs
-        self.n_nodes         = n_nodes
-        self.weights         = weights
-        self.bias            = bias
+        self.n_inputs = n_inputs
+        self.n_nodes  = n_nodes
+        self.weights  = weights
+        self.bias     = bias
 
         if activation_func is None:
             self.activation_func = lambda x: 1/(1 + np.exp(-x))
@@ -69,11 +70,11 @@ class NeuralNetwork:
     def __init__(self,
                  n_inputs,
                  n_outputs,
-                 output_func = lambda z: np.exp(z)/np.sum(np.exp(z), axis = 0, keepdims = True),
-                 layers           = None,
-                 n_nodes          = None,
-                 weights          = None,
-                 activation_funcs = None):
+                 output_func=lambda z: np.exp(z)/np.sum(np.exp(z), axis=0, keepdims=True),
+                 layers           =None,
+                 n_nodes          =None,
+                 weights          =None,
+                 activation_funcs =None):
 
         self.n_inputs    = n_inputs
         self.n_outputs   = n_outputs
