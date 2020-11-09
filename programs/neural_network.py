@@ -93,7 +93,7 @@ class NeuralNetwork:
 
     def set_weights(self):
         self.weights    = [layer.set_weights() for layer in self.layers]
-        self.weights[0] = np.eye(self.n_nodes[0])
+        self.weights[0] = np.ones(self.n_nodes[0])
 
     def set_bias(self):
         self.bias    = [layer.set_bias() for layer in self.layers]
@@ -102,7 +102,7 @@ class NeuralNetwork:
     def feed_forward(self, X, output_only=True):
         """
         Each column of X is a vector of inputs.
-        Returns an acivation matrix 'a' where each column is a vector of outputs
+        Returns an activation matrix 'a' where each column is a vector of outputs
         the corresponding inputs.
 
         Set output_only=True if you only want the output of the neural network.
@@ -114,22 +114,21 @@ class NeuralNetwork:
         weights = self.weights
         bias    = self.bias
 
-        a = np.zeros((len(self.layers),) + X.shape)
+        aa = np.zeros((len(self.layers),) + X.shape)
         z = np.zeros((len(self.layers),) + X.shape)
-        a[0] = z[0] = X
+        aa[0] = z[0] = X
 
         for l in range(1, len(self.layers)):
             layer = self.layers[l]
-            z[l]  = weights[l]@a[l-1] + bias[l]
-            a[l]  = layer.activation_func(z[l])
-            print(layer.activation_func(0))
+            z[l]  = weights[l]@aa[l-1] + bias[l]
+            aa[l]  = layer.activation_func(z[l])
             if l >= len(self.layers) - 1:
                 break
 
         if output_only:
-            return a[-1]
+            return aa[-1]
         else:
-            return a, z
+            return aa, z
 
 
     def back_propagation(self):
