@@ -1,4 +1,5 @@
 import numpy as np
+from copy import copy
 
 sigmoid = lambda x: 1/(1 + np.exp(-x))
 
@@ -121,7 +122,7 @@ class NeuralNetwork:
         for l in range(1, len(self.layers)):
             layer = self.layers[l]
             z[l]  = weights[l]@aa[l-1] + bias[l]
-            aa[l]  = layer.activation_func(z[l])
+            aa[l] = layer.activation_func(z[l])
             if l >= len(self.layers) - 1:
                 break
 
@@ -131,9 +132,23 @@ class NeuralNetwork:
             return aa, z
 
 
-    def back_propagation(self):
-        pass
+    def back_propagation(self, X_train, y_train):
 
+        weights_gradient = copy(self.weights)
+        bias_gradient    = copy(self.bias)
+
+        L = len(self.layers)
+        aa, z = feed_forward(X_train)
+        for k in range(X_train.shape[1]):                # Loop over the data set
+            for i in range(y_train.shape[0]):           # Loop over classification categories
+                delta = aa[-1][i, k] - y_train[i, k]
+                for l in range(L, 1, -1):               # Loop over the layers
+                    for j in range(len(aa[l-1])):       # Loop over the neurons
+                        for n in range(len(aa[l-2])):   # Loop over the inputs
+                            # Update weight gradient
+
+                    # Update bias gradient
+                    # Update delta
 
     def predict(self, X):
         probabilities = self.feed_forward(X)
