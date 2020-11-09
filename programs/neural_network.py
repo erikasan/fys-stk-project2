@@ -1,5 +1,7 @@
 import numpy as np
 
+sigmoid = lambda x: 1/(1 + np.exp(-x))
+
 class Layer:
     """
     Args:
@@ -21,19 +23,15 @@ class Layer:
     def __init__(self,
                  n_inputs,
                  n_nodes,
-                 weights         =None,
-                 bias            =None,
-                 activation_func =None):
+                 weights        =None,
+                 bias           =None,
+                 activation_func=None):
 
-        self.n_inputs = n_inputs
-        self.n_nodes  = n_nodes
-        self.weights  = weights
-        self.bias     = bias
-
-        if activation_func is None:
-            self.activation_func = lambda x: 1/(1 + np.exp(-x))
-        else:
-            self.activation_func = activation_func
+        self.n_inputs        = n_inputs
+        self.n_nodes         = n_nodes
+        self.weights         = weights
+        self.bias            = bias
+        self.activation_func = activation_func
 
 
     def set_weights(self):
@@ -68,62 +66,70 @@ class NeuralNetwork:
     """
 
     def __init__(self,
-                 n_inputs,
-                 n_outputs,
-                 output_func=lambda z: np.exp(z)/np.sum(np.exp(z), axis=0, keepdims=True),
-                 layers           =None,
-                 n_nodes          =None,
-                 weights          =None,
-                 activation_funcs =None):
+                 n_nodes,
+                 activation_funcs=None,
+                 output_func=lambda z: np.exp(z)/np.sum(np.exp(z), axis=0, keepdims=True)):
 
-        self.n_inputs    = n_inputs
-        self.n_outputs   = n_outputs
-        self.output_func = output_func
-        self.layers      = np.array(layers)
-        self.n_nodes     = np.array(n_nodes)
+        self.n_nodes          = np.array(n_nodes)
+        self.activation_funcs = activation_funcs
+        self.output_func      = output_func
 
-        if n_nodes is not None:
+        if activation_funcs is None:
+            activation_funcs     = len(n_nodes)*[sigmoid]
+            activation_funcs[0]  = lambda x: x
+            activation_funcs[-1] = output_func
 
-            if activation_funcs is None:
-                activation_funcs = len(n_nodes)*[None]
+        layers = []
 
-            layers = []
+        first_layer = Layer(n_inputs=n_nodes[0], n_nodes=n_nodes[0], activation_func=activation_funcs[0])
+        layers.append(first_layer)
 
-            first_layer = Layer(n_inputs = n_inputs, n_nodes = n_nodes[0], activation_func = activation_funcs[0])
-            layers.append(first_layer)
+        for i in range(1, len(n_nodes)):
+            layer = Layer(n_inputs=n_nodes[i-1], n_nodes=n_nodes[i], activation_func=activation_funcs[i])
+            layers.append(layer)
 
-            for i in range(1, len(n_nodes)):                                                    # All other hidden layers
-                layer = Layer(n_inputs = n_nodes[i-1], n_nodes = n_nodes[i], activation_func = activation_funcs[i])
-                layers.append(layer)
-
-            last_layer = Layer(n_inputs = n_nodes[-1], n_nodes = n_outputs, activation_func = self.output_func)
-            layers.append(last_layer)
-
-            self.layers = np.array(layers)
+        self.layers = layers
 
 
     def set_weights(self):
-        self.weights = [layer.set_weights() for layer in self.layers]
-
+        self.weights    = [layer.set_weights() for layer in self.layers]
+        self.weights[0] = np.eye(self.n_nodes[0])
 
     def set_bias(self):
-        self.bias = [layer.set_bias() for layer in self.layers]
+        self.bias    = [layer.set_bias() for layer in self.layers]
+        self.bias[0] = np.zeros(self.n_nodes[0])
 
-
-    def feed_forward(self, X):
+    def feed_forward(self, X, output_only=True):
+        """
+        Each column of X is a vector of inputs.
+        Returns an acivation matrix 'a' where each column is a vector of outputs
+        the corresponding inputs.
+        """
         X = np.array(X)
-
-        assert X.shape[0] == self.n_inputs, f'input vector must have {self.n_inputs} elements'
-
-        if self.layers is None:
-            return output_func(X)
 
         weights = self.weights
         bias    = self.bias
 
-        a = X
-        for l, layer in enumerate(self.layers):
-            z = weights[l]@a + bias[l]
-            a = layer.activation_func(z)
+        a = np.zeros((len(self.layers),) + X.shape)
+        z  = np.zeros((len(self.layers),) + X.shape)
+        a[0] = z[0] = X
 
-        return a
+        for l, layer in enumerate(self.layers, start=1):
+            z[l]  = weights[l]@a[l-1] + bias[l]
+            a[l] = layer.activation_func(z[l])
+            if l >= len(self.layers) - 1:
+                break
+
+        if output_only:
+            return a[-1]
+        else:
+            return a
+
+
+    def back_propagation(self):
+        pass
+
+
+    def predict(self, X):
+        probabilities = self.feed_forward(X)
+        return np.argmax(probabilities, axis = 0)
