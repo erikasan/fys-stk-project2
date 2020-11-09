@@ -104,6 +104,10 @@ class NeuralNetwork:
         Each column of X is a vector of inputs.
         Returns an acivation matrix 'a' where each column is a vector of outputs
         the corresponding inputs.
+
+        Set output_only=True if you only want the output of the neural network.
+        Set output_false=True to return the activities and activations of all the layers (necessary for backpropagation)
+
         """
         X = np.array(X)
 
@@ -111,19 +115,21 @@ class NeuralNetwork:
         bias    = self.bias
 
         a = np.zeros((len(self.layers),) + X.shape)
-        z  = np.zeros((len(self.layers),) + X.shape)
+        z = np.zeros((len(self.layers),) + X.shape)
         a[0] = z[0] = X
 
-        for l, layer in enumerate(self.layers, start=1):
+        for l in range(1, len(self.layers)):
+            layer = self.layers[l]
             z[l]  = weights[l]@a[l-1] + bias[l]
-            a[l] = layer.activation_func(z[l])
+            a[l]  = layer.activation_func(z[l])
+            print(layer.activation_func(0))
             if l >= len(self.layers) - 1:
                 break
 
         if output_only:
             return a[-1]
         else:
-            return a
+            return a, z
 
 
     def back_propagation(self):
