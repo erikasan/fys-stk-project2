@@ -114,8 +114,8 @@ class NeuralNetwork:
         weights = self.weights
         bias    = self.bias
 
-        aa = np.zeros((len(self.layers),) + X.shape)
-        z = np.zeros((len(self.layers),) + X.shape)
+        aa = len(self.layers)*[0]
+        z = len(self.layers)*[0]
         aa[0] = z[0] = X
 
         for l in range(1, len(self.layers)):
