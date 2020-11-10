@@ -115,40 +115,48 @@ class NeuralNetwork:
         weights = self.weights
         bias    = self.bias
 
-        aa = len(self.layers)*[0]
+        a = len(self.layers)*[0]
         z = len(self.layers)*[0]
-        aa[0] = z[0] = X
+        a[0] = z[0] = X
 
         for l in range(1, len(self.layers)):
             layer = self.layers[l]
-            z[l]  = weights[l]@aa[l-1] + bias[l]
-            aa[l] = layer.activation_func(z[l])
+            z[l]  = weights[l]@a[l-1] + bias[l]
+            a[l] = layer.activation_func(z[l])
             if l >= len(self.layers) - 1:
                 break
 
         if output_only:
-            return aa[-1]
+            return a[-1]
         else:
-            return aa, z
+            return a, z
 
 
     def back_propagation(self, X_train, y_train):
 
         weights_gradient = copy(self.weights)
         bias_gradient    = copy(self.bias)
+        delta            = copy(self.bias)
 
         L = len(self.layers)
-        aa, z = feed_forward(X_train)
-        for k in range(X_train.shape[1]):                # Loop over the data set
-            for i in range(y_train.shape[0]):           # Loop over classification categories
-                delta = aa[-1][i, k] - y_train[i, k]
-                for l in range(L, 1, -1):               # Loop over the layers
-                    for j in range(len(aa[l-1])):       # Loop over the neurons
-                        for n in range(len(aa[l-2])):   # Loop over the inputs
-                            # Update weight gradient
+        a, z = self.feed_forward(X_train, output_only=False)
+        for k in range(X_train.shape[1]):                       # Loop over the data set
+            for j in range(len(a[-1])):                        # Loop over neurons in the last layer
+                delta[-1][j] = a[-1][j] - y_train[j][k]
+                bias_gradient[-1][j] = delta[-1][j]
 
-                    # Update bias gradient
-                    # Update delta
+                for n in range(len(self.weights[-1][j])):
+                    weights_gradient[-1][j, n] = delta[-1][j]*a[-2][n]
+
+            for l in range(L - 2, 1, -1):                       # Loop over the other layers
+                for j in range(len(a[l])):                   # Loop over the neurons
+                    bias_gradient[l][j] = delta[l][j]
+
+                    for n in range(len(self.weights[l][j])):               # Loop over the inputs
+                        weights_gradient[l][j, n] = delta[l][j]*a[l-1][n]
+
+                    delta[l-1][j] = a[l-1][j]*(1 - a[l-1][j])*np.sum(delta[l+1]*self.weights[l+1][:][j])
+
 
     def predict(self, X):
         probabilities = self.feed_forward(X)
