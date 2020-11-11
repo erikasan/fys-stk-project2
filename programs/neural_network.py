@@ -104,9 +104,9 @@ class NeuralNetwork:
         """
         Each column of X is a vector of inputs.
         Returns an activation matrix 'a' where each column is a vector of outputs
-        the corresponding inputs.
+        of the corresponding inputs.
 
-        Set output_only=True if you only want the output of the neural network.
+        Set output_only=True if you only want the output of the neural network (i.e the activations of the nodes in the last layer).
         Set output_false=True to return the activities and activations of all the layers (necessary for backpropagation)
 
         """
@@ -140,22 +140,24 @@ class NeuralNetwork:
 
         L = len(self.layers)
         a, z = self.feed_forward(X_train, output_only=False)
-        for k in range(X_train.shape[1]):                       # Loop over the data set
-            for j in range(len(a[-1])):                        # Loop over neurons in the last layer
-                delta[-1][j] = a[-1][j] - y_train[j][k]
-                bias_gradient[-1][j] = delta[-1][j]
 
-                for n in range(len(self.weights[-1][j])):
-                    weights_gradient[-1][j, n] = delta[-1][j]*a[-2][n]
+        for j in range(len(a[-1])):                                     # Loop over neurons in the last layer
+            delta[-1][j] = a[-1][j] - y_train[j][k]
+            bias_gradient[-1][j] = delta[-1][j]
 
-            for l in range(L - 2, 1, -1):                       # Loop over the other layers
-                for j in range(len(a[l])):                   # Loop over the neurons
-                    bias_gradient[l][j] = delta[l][j]
+            for n in range(len(self.weights[-1][j])):                   # Loop over the weights of each neuron in the last layer
+                weights_gradient[-1][j, n] = delta[-1][j]*a[-2][n]
 
-                    for n in range(len(self.weights[l][j])):               # Loop over the inputs
-                        weights_gradient[l][j, n] = delta[l][j]*a[l-1][n]
+        for l in range(L - 2, 1, -1):                                   # Loop over the other layers
+            for j in range(len(a[l])):                                  # Loop over the neurons
+                bias_gradient[l][j] = delta[l][j]
 
-                    delta[l-1][j] = a[l-1][j]*(1 - a[l-1][j])*np.sum(delta[l+1]*self.weights[l+1][:][j])
+                for n in range(len(self.weights[l][j])):               # Loop over the weights of each neuron
+                    weights_gradient[l][j, n] = delta[l][j]*a[l-1][n]
+
+                delta[l-1][j] = a[l-1][j]*(1 - a[l-1][j])*np.sum(delta[l+1]*self.weights[l+1][:][j])
+
+        return weights_gradient, bias_gradient
 
 
     def predict(self, X):
