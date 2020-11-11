@@ -2,15 +2,17 @@ import numpy as np
 from neural_network import NeuralNetwork
 
 
-n_nodes = [3, 5, 3]
-NN = NeuralNetwork(n_nodes = n_nodes)
+n_nodes = [1, 1]
+NN = NeuralNetwork(n_nodes = n_nodes, output_func = lambda x: x)
 NN.set_weights()
 NN.set_bias()
 
-X = np.zeros((3, 1))
-X[:, 0] = [1, 2, 3]
+def f(x):
+    return np.pi + np.exp(1)*x + 42*x**2
 
-y = np.zeros((3, 1))
-y[:, 0] = [2, 3, 4]
+x = [0]
+y = [f(0)]
 
-NN.back_propagation(X, y)
+weights_gradient, bias_gradient = NN.back_propagation(x, y)
+
+NN.gradient_descent(weights_gradient, bias_gradient, iterations = 100000)

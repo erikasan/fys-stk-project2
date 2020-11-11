@@ -116,6 +116,8 @@ class NeuralNetwork:
 
         """
         X = np.array(X)
+        if len(X.shape) < 2:
+            X.shape = (X.shape[0], 1)
 
         weights = self.weights
         bias    = self.bias
@@ -127,7 +129,8 @@ class NeuralNetwork:
         for l in range(1, len(self.layers)):
             layer = self.layers[l]
             z[l]  = weights[l]@a[l-1] + bias[l]
-            a[l] = layer.activation_func(z[l])
+            a[l]  = layer.activation_func(z[l])
+
             if l >= len(self.layers) - 1:
                 break
 
@@ -138,37 +141,37 @@ class NeuralNetwork:
 
 
     def back_propagation(self, x, y):
-
+        y = np.array(y)
         weights_gradient = copy(self.weights)
         bias_gradient    = copy(self.bias)
         delta            = copy(self.bias)
 
         L = len(self.layers)
-        a, z = self.feed_forward(x, output_only=False)
+        aa, z = self.feed_forward(x, output_only=False)
 
-        for j in range(len(a[-1])):                                     # Loop over neurons in the last layer
-            delta[-1][j] = a[-1][j] - y[j]
+        for j in range(len(aa[-1])):                                     # Loop over neurons in the last layer
+            delta[-1][j] = aa[-1][j] - y[j]
             bias_gradient[-1][j] = delta[-1][j]
 
             for n in range(len(self.weights[-1][j])):                   # Loop over the weights of each neuron in the last layer
-                weights_gradient[-1][j, n] = delta[-1][j]*a[-2][n]
+                weights_gradient[-1][j, n] = delta[-1][j]*aa[-2][n]
 
         for l in range(L - 2, 1, -1):                                   # Loop over the other layers
-            for j in range(len(a[l])):                                  # Loop over the neurons
+            for j in range(len(aa[l])):                                  # Loop over the neurons
                 bias_gradient[l][j] = delta[l][j]
 
                 for n in range(len(self.weights[l][j])):               # Loop over the weights of each neuron
-                    weights_gradient[l][j, n] = delta[l][j]*a[l-1][n]
+                    weights_gradient[l][j, n] = delta[l][j]*aa[l-1][n]
 
-                delta[l-1][j] = a[l-1][j]*(1 - a[l-1][j])*np.sum(delta[l+1]*self.weights[l+1][:][j])
+                delta[l-1][j] = aa[l-1][j]*(1 - aa[l-1][j])*np.sum(delta[l+1]*self.weights[l+1][:][j])
 
         return weights_gradient, bias_gradient
 
     def gradient_descent(self, weights_gradient, bias_gradient, eta = 0.01, iterations = 100):
-        for l, (weights_grad, bias_grad) in enumerate(zip(weights_gradient, bias_gradient)):
+        for l, (weights_grad, bias_grad) in enumerate(zip(weights_gradient[1:], bias_gradient[1:]), start = 1):
             self.weights[l] -= eta*weights_grad
             self.bias[l] -= eta*bias_grad
-        
+
 
     def predict(self, X):
         probabilities = self.feed_forward(X)
