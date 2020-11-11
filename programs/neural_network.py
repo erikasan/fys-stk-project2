@@ -69,11 +69,16 @@ class NeuralNetwork:
     def __init__(self,
                  n_nodes,
                  activation_funcs=None,
-                 output_func=lambda z: np.exp(z)/np.sum(np.exp(z), axis=0, keepdims=True)):
+                 output_func=lambda z: np.exp(z)/np.sum(np.exp(z), axis=0, keepdims=True),
+                 weights=None,
+                 bias   =None):
 
         self.n_nodes          = np.array(n_nodes)
         self.activation_funcs = activation_funcs
         self.output_func      = output_func
+
+        self.weights = weights
+        self.bias    = bias
 
         if activation_funcs is None:
             activation_funcs     = len(n_nodes)*[sigmoid]
@@ -132,17 +137,17 @@ class NeuralNetwork:
             return a, z
 
 
-    def back_propagation(self, X_train, y_train):
+    def back_propagation(self, x, y):
 
         weights_gradient = copy(self.weights)
         bias_gradient    = copy(self.bias)
         delta            = copy(self.bias)
 
         L = len(self.layers)
-        a, z = self.feed_forward(X_train, output_only=False)
+        a, z = self.feed_forward(x, output_only=False)
 
         for j in range(len(a[-1])):                                     # Loop over neurons in the last layer
-            delta[-1][j] = a[-1][j] - y_train[j][k]
+            delta[-1][j] = a[-1][j] - y[j]
             bias_gradient[-1][j] = delta[-1][j]
 
             for n in range(len(self.weights[-1][j])):                   # Loop over the weights of each neuron in the last layer
@@ -159,6 +164,11 @@ class NeuralNetwork:
 
         return weights_gradient, bias_gradient
 
+    def gradient_descent(self, weights_gradient, bias_gradient, eta = 0.01, iterations = 100):
+        for l, (weights_grad, bias_grad) in enumerate(zip(weights_gradient, bias_gradient)):
+            self.weights[l] -= eta*weights_grad
+            self.bias[l] -= eta*bias_grad
+        
 
     def predict(self, X):
         probabilities = self.feed_forward(X)
