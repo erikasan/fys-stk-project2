@@ -212,19 +212,30 @@ class RidgeRegression(StatisticalMetrics):
         return self.intercept_ + X @ self.coef_
 
 
-class GDRegressor:
+class GDRegressor(StatisticalMetrics):
     """
+    Gradient Descent (GD) regressor containing:
+    - Matrix inversion
+    - Batch GD
+    - Stochastic GD
+    - Mini-Batch GD
     """
 
-    def __init__(self, eta=0.01, n_iter=1000, tol=1e-5, fit_intercept=True):
+    def __init__(self, lmbda=0, eta=0.01, t0=5, t1=50, gamma=0.9,
+                 n_epochs=100, batch_size=8, tol=1e-5, fit_intercept=True):
         self.coef_ = None
         self.intercept_ = None
+        self._lmbda = lmbda
         self._eta = eta
-        self._n_iter = n_iter
         self._tol = tol
+        self._n_epochs = n_epochs
+        self._t0 = t0
+        self._t1 = t1
+        self._gamma = gamma
+        self._batch_size = batch_size
         self._fit_intercept = fit_intercept
 
-    def fit(self, X, y, weights=None, method="BGD"):
+    def fit(self, X, y, weights="uniform", method="BGD"):
         """
         Fit the model
         ----------
@@ -248,13 +259,33 @@ class GDRegressor:
         """
 
         # initialize coefficients
-        if weights is not None:
-            self.coef_ = weights
-        else:
-            if self._fit_intercept:
-                self.coef_ = np.zeros(X.shape[1] + 1)
+        # if weights is not None and not isinstance(weights, str):
+        allowed_weights = ["zeros", "normal", "uniform"]  # different
+        # initialization schemes
+        # for weights
+        if isinstance(weights, str):
+            if weights in allowed_weights:
+                if weights == "zeros":
+                    if self._fit_intercept:
+                        self.coef_ = np.zeros(X.shape[1] + 1)
+                    else:
+                        self.coef_ = np.zeros(X.shape[1])
+
+                if weights == "normal":
+                    if self._fit_intercept:
+                        self.coef_ = np.random.randn(X.shape[1] + 1)
+                    else:
+                        self.coef_ = np.random.randn(X.shape[1])
+
+                if weights == "uniform":
+                    if self._fit_intercept:
+                        self.coef_ = np.random.uniform(size=X.shape[1] + 1)
+                    else:
+                        self.coef_ = np.zeros(X.shape[1])
+
             else:
-                self.coef_ = np.zeros(X.shape[1])
+                raise ValueError(
+                    "'weighs' as dtype str must be initialized as 'zeros', 'normal' or 'uniform'")
 
         # add bias if fit_intercept
         if self._fit_intercept:
@@ -270,6 +301,9 @@ class GDRegressor:
         elif self._method == "SGD":
             coef = self._stochasticGD(_X)
 
+        elif self._method == "MBGD":
+            coef = self._mini_batchGD(_X)
+
         # set attributes
         if self._fit_intercept:
             self.intercept_ = coef[0]
@@ -281,47 +315,107 @@ class GDRegressor:
         return self.coef_
 
     def _inversion(self, _X):
+        """
+        Matrix Inversion
+        """
         self._inv_xTx = np.linalg.pinv(_X.T @ _X)  # pseudo-inverse
         coef = self._inv_xTx @ _X.T @ self.target
         return coef
 
     def _batchGD(self, _X):
+        """
+        Batch Gradient Descent
+        """
 
         m = _X.shape[0]
         factor = 2 / m
         coef = self.coef_
 
-        for iteration in range(self._n_iter):
+        for epoch in range(self._n_epochs):
             coef_old = coef
-            gradients = factor * _X.T @ (_X @ coef - self.target)
+            gradients = factor * _X.T @ (_X @ coef - self.target) + \
+                2 * self._lmbda * coef
             coef = coef_old - self._eta * gradients
             dL2 = np.linalg.norm(coef - coef_old)
             if dL2 < self._tol or coef[0] != coef[0]:
                 break
+
         return coef
 
     def _stochasticGD(self, _X):
+        """
+        Stochastic Gradient Descent
+        """
+
         m = _X.shape[0]
-        n_epochs = 50
-        t0, t1 = 5, 50  # learning schedule hyperparameters
+        # n_epochs = 50
+        # t0, t1 = 5, 50  # learning schedule hyperparameters
+
         coef = self.coef_
 
         def learning_schedule(t):
             """
             Determines the learning rate at each iteration
             """
-            return t0 / (t + t1)
+            return self._t0 / (t + self._t1)
 
-        # coef = np.random.randn(2, 1)  # random initialization
-
-        for epoch in range(n_epochs):
+        for epoch in range(self._n_epochs):
+            vprev = None
             for i in range(m):
                 random_index = np.random.randint(m)
                 xi = _X[random_index:random_index + 1]
                 yi = self.target[random_index:random_index + 1]
-                gradients = 2 * xi.T @ ((xi @ coef) - yi)
-                eta = learning_schedule(epoch * m + i)
-                coef = coef - eta * gradients
+                gradients = 2 * xi.T @ ((xi @ coef) - yi) + \
+                    2 * self._lmbda * coef
+                #eta = learning_schedule(epoch * m + i)
+                eta = self._eta
+                if vprev is None:
+                    vprev = eta * gradients
+                vnew = self._gamma * vprev  # momentum
+                coef = coef - vnew - eta * gradients
+                vprev = vnew
+
+        return coef
+
+    def _mini_batchGD(self, _X):
+        """
+        Mini-Batch Gradient Descent
+        """
+        m = _X.shape[0]
+        b = int(m / self._batch_size)  # number of minibatches
+        factor = 2 / b
+        coef = self.coef_
+        # t0, t1 = 5, 50  # learning schedule hyperparameters
+
+        #factor = 2 / M
+
+        def learning_schedule(t):
+            """
+            Determines the learning rate at each iteration
+            """
+            return self._t0 / (t + self._t1)
+
+        for epoch in range(self._n_epochs):
+            vprev = None
+            batches_x = np.array_split(_X, self._batch_size)
+            batches_y = np.array_split(self.target, self._batch_size)
+            for i in range(b):
+                random_index = np.random.randint(len(batches_x))
+                batch_x = batches_x[random_index]
+                batch_y = batches_y[random_index]
+                coef_old = coef
+                gradients = factor * \
+                    batch_x.T @ ((batch_x @ coef) - batch_y) + \
+                    2 * self._lmbda * coef
+                #gradients = 2 / b * batch_x.T @ ((batch_x @ coef) - batch_y)
+                #eta = learning_schedule(epoch * m + i)
+                eta = self._eta
+                if vprev is None:
+                    vprev = eta * gradients
+                vnew = self._gamma * vprev  # momentum
+                coef = coef - vnew - eta * gradients
+                vprev = vnew
+                #coef = coef_old - eta * gradients
 
         return coef
 
