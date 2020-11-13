@@ -167,7 +167,7 @@ class NeuralNetwork:
 
         return weights_gradient, bias_gradient
 
-    def gradient_descent(self, weights_gradient, bias_gradient, eta = 0.01, iterations = 100):
+    def gradient_descent(self, weights_gradient, bias_gradient, eta = 0.01):
         for l, (weights_grad, bias_grad) in enumerate(zip(weights_gradient[1:], bias_gradient[1:]), start = 1):
             self.weights[l] -= eta*weights_grad
             self.bias[l] -= eta*bias_grad
