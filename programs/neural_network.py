@@ -131,9 +131,19 @@ class NeuralNetwork:
             a.append(f(z[-1]))
 
         delta = self.cost_derivative(a[-1], y)*self.functions_derivative[-1](z[-1])
+        nabla_w[-1] = delta@a[-2].T
+        nabla_b[-1] = delta
+        for l in range(self.num_layers-3, 0, -1):
+            delta = self.weights[l+1].T@delta * self.functions_derivative[l](z[l])
+            nabla_w[-l] = delta@a[l-1].T
+            nabla_b[-l] = delta
 
-        for l in range(self.num_layers-2, -1, -1):
-            nabla_w[l] = delta@a[l-1].T
-            nabla_b[l] = delta
-            delta = self.weights[l].T@delta * self.functions_derivative[l-1](z[l-1])
         return nabla_w, nabla_b
+
+    def predict(self, x):
+        a = self.feedforward(x)
+        return np.argmax(a, axis = 0)
+
+    def evaluate(self, test_data):
+        test_results = [(self.predict(x), y) for x, y in test_data]
+        return np.sum([int(x == y) for x, y in test_results])
