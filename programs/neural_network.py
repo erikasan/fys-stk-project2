@@ -12,6 +12,12 @@ def softmax(x):
 def softmax_derivative(x):
     return softmax(x)*(1 - softmax(x))
 
+def cross_entropy():
+    pass
+
+def cross_entropy_derivative(a, y):
+    return a - y
+
 
 class NeuralNetwork:
 
@@ -47,8 +53,9 @@ class NeuralNetwork:
         self.functions            = functions
         self.functions_derivative = functions_derivative
 
-        self.cost_function   = cost_function
-        self.cost_derivative = cost_derivative
+        if cost_function is None:
+            self.cost_function = cross_entropy
+            self.cost_derivative = cross_entropy_derivative
 
     def feedforward(self, a):
         """Return the output of the neural network.
@@ -125,8 +132,8 @@ class NeuralNetwork:
 
         delta = self.cost_derivative(a[-1], y)*self.functions_derivative[-1](z[-1])
 
-        for l in range(self.num_layers, 0, -1):
+        for l in range(self.num_layers-2, -1, -1):
             nabla_w[l] = delta@a[l-1].T
             nabla_b[l] = delta
-            delta = self.weights[l].T@delta * functions_derivative[l-1](z[l-1])
+            delta = self.weights[l].T@delta * self.functions_derivative[l-1](z[l-1])
         return nabla_w, nabla_b
