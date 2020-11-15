@@ -107,7 +107,7 @@ class NeuralNetwork:
             for x, y in mini_batch:
                 delta_nabla_w, delta_nabla_b = self.backprop(x, y)
                 nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
-                nabla_b = [nb + dnb for nb, dnb in zip(nabla_b), delta_nabla_b]
+                nabla_b = [nb + dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
             self.weights = [w - eta*nw/mini_batch_size for w, nw in zip(self.weights, nabla_w)]
             self.bias    = [b - eta*nb/mini_batch_size for b, nb in zip(self.biases, nabla_b)]
 
