@@ -1,178 +1,92 @@
 import numpy as np
-from copy import copy
 
-sigmoid = lambda x: 1/(1 + np.exp(-x))
+def sigmoid(x):
+    return 1/(1 + np.exp(-x))
 
-class Layer:
-    """
-    Args:
+def softmax(x):
+    return np.exp(x)/np.sum(np.exp(x), axis=0, keepdims=True)
 
-        n_inputs (int)             - number of inputs
-
-        n_nodes  (int)             - number of nodes/outputs
-
-        weights  (numpy.ndarray)   - matrix of weights
-                                     must have shape (n_nodes, n_inputs)
-
-        bias     (numpy.ndarray)   - column vector of biases
-                                     must have shape (n_nodes, 1)
-
-        activation_func (callable) - activation function of nodes
-                                     default is the sigmoid function
-    """
-
-    def __init__(self,
-                 n_inputs,
-                 n_nodes,
-                 weights        =None,
-                 bias           =None,
-                 activation_func=None):
-
-        self.n_inputs        = n_inputs
-        self.n_nodes         = n_nodes
-        self.weights         = weights
-        self.bias            = bias
-        self.activation_func = activation_func
-
-
-    def set_weights(self):
-        self.weights = np.random.randn(self.n_nodes, self.n_inputs)
-        return self.weights
-
-
-    def set_bias(self):
-        self.bias = 0.01*np.ones((self.n_nodes, 1))
-        return self.bias
 
 class NeuralNetwork:
-    """
-    Args:
 
-        n_inputs    (int)                       - the number of inputs of the neural network
+    def __init__(self, layers, functions=None):
+        """Initialize a NeuralNetwork object.
 
-        n_outputs   (int)                       - the number of outputs of the neural network
+        Parameters:
 
-        output_func (callable)                  - the output function of the neural network
-                                                  default is the softmax function
+            layers : list of ints
+                List of the number of nodes in each layer. The first and last
+                elements are the number of nodes in the input and output layers respectively.
+                The other elements are the number of nodes in the hidden layers.
 
-        layers      (array-like, Layer)         - array/list of Layer objects
+            functions : list of callables, optional
+                List of the activation function of the nodes in each layer. Must have
+                length len(layers - 1). The first element is the activation function
+                of the first hidden layer. The last element is the activation function
+                of the output layer. By the default the activation function of the
+                hidden layers is the sigmoid function, while the activation function
+                of the output layer is the softmax function."""
 
-        n_nodes     (array-like, int)           - array/list of the number of nodes
-                                                  the first element is the number of nodes in the first layer
-                                                  the second element is the number of nodes in the second layer, and so on
+        self.layers     = layers
+        self.num_layers = len(layers)
 
-        activation_funcs (array-like, callable) - array/list of functions
-                                                  the first element is the activation function of the first layer
-                                                  the second element is the activation function of the second layer, and so on
-    """
+        self.weights    = [np.random.randn(m, n) for m, n in zip(layers[1:], layers[:-1])]
+        self.biases     = [0.01*np.ones((m, 1)) for m in layers[1:]]
 
-    def __init__(self,
-                 n_nodes,
-                 activation_funcs=None,
-                 output_func=lambda z: np.exp(z)/np.sum(np.exp(z), axis=0, keepdims=True),
-                 weights=None,
-                 bias   =None):
+        if functions is None:
+            functions  = [sigmoid]*(len(layers) - 2)
+            functions += [softmax]
+        self.functions = functions
 
-        self.n_nodes          = np.array(n_nodes)
-        self.activation_funcs = activation_funcs
-        self.output_func      = output_func
+        def feedforward(self, a):
+            """Return the output of the neural network.
 
-        self.weights = weights
-        self.bias    = bias
+            Parameters:
 
-        if activation_funcs is None:
-            activation_funcs     = len(n_nodes)*[sigmoid]
-            activation_funcs[0]  = lambda x: x
-            activation_funcs[-1] = output_func
+                a : ndarray
+                    Input column vector. Must have shape (m, 1) where
+                    m is the number of nodes in the input layer. Alternatively
+                    several inputs can be fed forward simultaneously by providing
+                    an ndarray of shape (m, n)
 
-        layers = []
+            Returns:
 
-        first_layer = Layer(n_inputs=n_nodes[0], n_nodes=n_nodes[0], activation_func=activation_funcs[0])
-        layers.append(first_layer)
+                out : ndarray
+                    The output of the neural network. If an input of shape (m, n)
+                    is provided, an output of shape (M, n) is given where M is
+                    the number of nodes in the output layer."""
 
-        for i in range(1, len(n_nodes)):
-            layer = Layer(n_inputs=n_nodes[i-1], n_nodes=n_nodes[i], activation_func=activation_funcs[i])
-            layers.append(layer)
+            for w, b, f in zip(self.weights, self.biases, self.functions):
+                a = f(w@a + b)
+            return a
 
-        self.layers = layers
+        def SGD(self, training_data, epochs, mini_batch_size, eta):
+            """Docstring to be updated.
 
+            Parameters:
 
-    def set_weights(self):
-        self.weights    = [layer.set_weights() for layer in self.layers]
-        self.weights[0] = np.ones(self.n_nodes[0])
+                training_data : list of tuples of ndarrays
+                    List on the form [(x1, y1), (x2, y2), ...] where e.g.
+                    x1, y1 are column vectors of an input and the corresponding desired
+                    output of the neural network respectively.
 
-    def set_bias(self):
-        self.bias    = [layer.set_bias() for layer in self.layers]
-        self.bias[0] = np.zeros(self.n_nodes[0])
+                epochs : int
+                    The number of epochs.
 
-    def feed_forward(self, X, output_only=True):
-        """
-        Each column of X is a vector of inputs.
-        Returns an activation matrix 'a' where each column is a vector of outputs
-        of the corresponding inputs.
+                mini_batch_size : int
+                    The size of each mini_batch.
 
-        Set output_only=True if you only want the output of the neural network (i.e the activations of the nodes in the last layer).
-        Set output_false=True to return the activities and activations of all the layers (necessary for backpropagation)
+                eta : int or float
+                    The learning rate when applying gradient descent."""
 
-        """
-        X = np.array(X)
-        if len(X.shape) < 2:
-            X.shape = (X.shape[0], 1)
+            n = len(training_data)
+            for j in range(epochs):
+                mini_batches = [training_data[k:k+mini_batch_size] for k in range(0, n, mini_batch_size)]
+                for mini_batch in mini_batches:
+                    self.GD(mini_batch, eta)
 
-        weights = self.weights
-        bias    = self.bias
+        def GD(self):
+            pass
 
-        a = len(self.layers)*[0]
-        z = len(self.layers)*[0]
-        a[0] = z[0] = X
-
-        for l in range(1, len(self.layers)):
-            layer = self.layers[l]
-            z[l]  = weights[l]@a[l-1] + bias[l]
-            a[l]  = layer.activation_func(z[l])
-
-            if l >= len(self.layers) - 1:
-                break
-
-        if output_only:
-            return a[-1]
-        else:
-            return a, z
-
-
-    def back_propagation(self, x, y):
-        y = np.array(y)
-        weights_gradient = copy(self.weights)
-        bias_gradient    = copy(self.bias)
-        delta            = copy(self.bias)
-
-        L = len(self.layers)
-        aa, z = self.feed_forward(x, output_only=False)
-
-        for j in range(len(aa[-1])):                                     # Loop over neurons in the last layer
-            delta[-1][j] = aa[-1][j] - y[j]
-            bias_gradient[-1][j] = delta[-1][j]
-
-            for n in range(len(self.weights[-1][j])):                   # Loop over the weights of each neuron in the last layer
-                weights_gradient[-1][j, n] = delta[-1][j]*aa[-2][n]
-
-        for l in range(L - 2, 1, -1):                                   # Loop over the other layers
-            for j in range(len(aa[l])):                                  # Loop over the neurons
-                bias_gradient[l][j] = delta[l][j]
-
-                for n in range(len(self.weights[l][j])):               # Loop over the weights of each neuron
-                    weights_gradient[l][j, n] = delta[l][j]*aa[l-1][n]
-
-                delta[l-1][j] = aa[l-1][j]*(1 - aa[l-1][j])*np.sum(delta[l+1]*self.weights[l+1][:][j])
-
-        return weights_gradient, bias_gradient
-
-    def gradient_descent(self, weights_gradient, bias_gradient, eta = 0.01):
-        for l, (weights_grad, bias_grad) in enumerate(zip(weights_gradient[1:], bias_gradient[1:]), start = 1):
-            self.weights[l] -= eta*weights_grad
-            self.bias[l] -= eta*bias_grad
-
-
-    def predict(self, X):
-        probabilities = self.feed_forward(X)
-        return np.argmax(probabilities, axis = 0)
+        def backprop(self):
+            pass
