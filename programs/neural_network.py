@@ -3,13 +3,19 @@ import numpy as np
 def sigmoid(x):
     return 1/(1 + np.exp(-x))
 
+def sigmoid_derivative(x):
+    return sigmoid(x)*(1 - sigmoid(x))
+
 def softmax(x):
     return np.exp(x)/np.sum(np.exp(x), axis=0, keepdims=True)
+
+def softmax_derivative(x):
+    pass
 
 
 class NeuralNetwork:
 
-    def __init__(self, layers, functions=None):
+    def __init__(self, layers, functions=None, functions_derivative=None, cost_function=None, cost_derivative=None):
         """Initialize a NeuralNetwork object.
 
         Parameters:
@@ -22,8 +28,8 @@ class NeuralNetwork:
             functions : list of callables, optional
                 List of the activation function of the nodes in each layer. Must have
                 length len(layers - 1). The first element is the activation function
-                of the first hidden layer. The last element is the activation function
-                of the output layer. By the default the activation function of the
+                of the first hidden layer, and so on. The last element is the activation
+                function of the output layer. By the default the activation function of the
                 hidden layers is the sigmoid function, while the activation function
                 of the output layer is the softmax function."""
 
@@ -81,12 +87,26 @@ class NeuralNetwork:
 
             n = len(training_data)
             for j in range(epochs):
+                np.random.shuffle(training_data)
                 mini_batches = [training_data[k:k+mini_batch_size] for k in range(0, n, mini_batch_size)]
-                for mini_batch in mini_batches:
+                for k, mini_batch in enumerate(mini_batches):
                     self.GD(mini_batch, eta)
+                print(f'epoch {j+1}/{epochs} complete')
 
-        def GD(self):
-            pass
+        def GD(self, mini_batch, eta):
+            """Docstring to be updated."""
+            mini_batch_size = len(mini_batch)
+            nabla_w = [np.zeros(w.shape) for w in self.weights]
+            nabla_b = [np.zeros(b.shape) for b in self.biases]
+            for x, y in mini_batch:
+                delta_nabla_w, delta_nabla_b = self.backprop(x, y)
+                nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
+                nabla_b = [nb + dnb for nb, dnb in zip(nabla_b), delta_nabla_b]
+            self.weights = [w - eta*nw/mini_batch_size for w, nw in zip(self.weights, nabla_w)]
+            self.bias    = [b - eta*nb/mini_batch_size for b, nb in zip(self.biases, nabla_b)]
 
-        def backprop(self):
-            pass
+        def backprop(self, x, y):
+            """Docstring to be updated."""
+
+            nabla_w = [np.zeros(w.shape) for w in self.weights]
+            nabla_b = [np.zeros(b.shape) for b in self.biases]
