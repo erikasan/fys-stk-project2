@@ -10,7 +10,7 @@ def softmax(x):
     return np.exp(x)/np.sum(np.exp(x), axis=0, keepdims=True)
 
 def softmax_derivative(x):
-    pass
+    return softmax(x)*(1 - softmax(x))
 
 
 class NeuralNetwork:
@@ -42,7 +42,13 @@ class NeuralNetwork:
         if functions is None:
             functions  = [sigmoid]*(len(layers) - 2)
             functions += [softmax]
-        self.functions = functions
+            functions_derivative  = [sigmoid_derivative]*(len(layers) - 2)
+            functions_derivative += [softmax_derivative]
+        self.functions            = functions
+        self.functions_derivative = functions_derivative
+
+        self.cost_function   = cost_function
+        self.cost_derivative = cost_derivative
 
         def feedforward(self, a):
             """Return the output of the neural network.
@@ -110,3 +116,17 @@ class NeuralNetwork:
 
             nabla_w = [np.zeros(w.shape) for w in self.weights]
             nabla_b = [np.zeros(b.shape) for b in self.biases]
+
+            a = [x]
+            z = []
+            for w, b, f in zip(self.weights, self.biases, self.functions):
+                z.append(w@a[-1] + b)
+                a.append(f(z[-1]))
+
+            delta = self.cost_derivative(a[-1], y)*self.functions_derivative[-1](z[-1])
+
+            for l in range(self.num_layers, 0, -1):
+                nabla_w[l] = delta@a[l-1].T
+                nabla_b[l] = delta
+                delta = self.weights[l].T@delta * functions_derivative[l-1](z[l-1])
+            return nabla_w, nabla_b
