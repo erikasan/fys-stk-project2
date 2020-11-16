@@ -27,10 +27,10 @@ def to_categorical_numpy(integer_vector):
 Y_train_onehot, Y_test_onehot = to_categorical_numpy(Y_train), to_categorical_numpy(Y_test)
 
 training_data = [(x, y) for x, y in zip(X_train, Y_train_onehot)]
-test_data = [(x, y) for x, y in zip(X_test, Y_test)]
+test_data     = [(x, y) for x, y in zip(X_test, Y_test)]
 
 net = NeuralNetwork([64, 30, 10], mode='classification')
 
-net.SGD(training_data, epochs=100, mini_batch_size=10, eta=0.1)
+net.SGD(training_data, epochs=100, mini_batch_size=5, eta=3)
 
 print(f'{net.evaluate(test_data)/len(test_data)*100:.1f}% success rate')

@@ -67,6 +67,7 @@ class NeuralNetwork:
             cost_function        = MSE
             cost_derivative      = MSE_derivative
 
+        self.mode                 = mode
         self.functions            = functions
         self.functions_derivative = functions_derivative
         self.cost_function        = cost_function
@@ -146,7 +147,11 @@ class NeuralNetwork:
             z.append(w@a[-1] + b)
             a.append(f(z[-1]))
 
-        delta = self.cost_derivative(a[-1], y)*self.functions_derivative[-1](z[-1])
+        if self.mode == 'classification':
+            delta = a[-1] - y
+        elif self.mode == 'regression':
+            delta = self.cost_derivative(a[-1], y)*self.functions_derivative[-1](z[-1])
+
         nabla_w[-1] = delta@a[-2].T
         nabla_b[-1] = delta
         for l in range(self.num_layers-2, 0, -1):
