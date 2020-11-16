@@ -12,6 +12,12 @@ def softmax(x):
 def softmax_derivative(x):
     return softmax(x)*(1 - softmax(x))
 
+def MSE(a, y):
+    return np.sum((a - y)**2)/len(a)
+
+def MSE_derivative(a, y):
+    return a - y
+
 def cross_entropy():
     pass
 
@@ -21,7 +27,7 @@ def cross_entropy_derivative(a, y):
 
 class NeuralNetwork:
 
-    def __init__(self, layers, functions=None, functions_derivative=None, cost_function=None, cost_derivative=None):
+    def __init__(self, layers, mode='classification'):
         """Initialize a NeuralNetwork object.
 
         Parameters:
@@ -45,17 +51,27 @@ class NeuralNetwork:
         self.weights    = [np.random.randn(m, n) for m, n in zip(layers[1:], layers[:-1])]
         self.biases     = [0.01*np.ones((m, 1)) for m in layers[1:]]
 
-        if functions is None:
-            functions  = [sigmoid]*(len(layers) - 2)
-            functions += [softmax]
+        assert mode in ['classification', 'regression'], 'mode must be "classification" or "regression"'
+
+        if mode == 'classification':
+            functions             = [sigmoid]*(len(layers) - 2)
+            functions            += [softmax]
             functions_derivative  = [sigmoid_derivative]*(len(layers) - 2)
             functions_derivative += [softmax_derivative]
+            cost_function         = cross_entropy
+            cost_derivative       = cross_entropy_derivative
+
+        elif mode == 'regression':
+            functions            = [sigmoid]*(len(layers) - 1)
+            functions_derivative = [sigmoid_derivative]*(len(layers) - 1)
+            cost_function        = MSE
+            cost_derivative      = MSE_derivative
+
         self.functions            = functions
         self.functions_derivative = functions_derivative
+        self.cost_function        = cost_function
+        self.cost_derivative      = cost_derivative
 
-        if cost_function is None:
-            self.cost_function   = cross_entropy
-            self.cost_derivative = cross_entropy_derivative
 
     def feedforward(self, a):
         """Return the output of the neural network.
