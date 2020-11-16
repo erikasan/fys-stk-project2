@@ -5,8 +5,8 @@ from sklearn.model_selection import train_test_split
 
 digits = datasets.load_digits()
 
-inputs = digits.images
-labels = digits.target
+inputs = digits.images[:10]
+labels = digits.target[:10]
 labels.shape += (1,)
 
 n_inputs = len(inputs)
@@ -18,7 +18,7 @@ X_train, X_test, Y_train, Y_test = train_test_split(inputs, labels, train_size=0
 
 def to_categorical_numpy(integer_vector):
     n_inputs = len(integer_vector)
-    n_categories = np.max(integer_vector) + 1
+    n_categories = 10
     onehot_vector = np.zeros((n_inputs, n_categories))
     onehot_vector[range(n_inputs), integer_vector] = 1
     onehot_vector.shape += (1,)
@@ -31,6 +31,6 @@ test_data     = [(x, y) for x, y in zip(X_test, Y_test)]
 
 net = NeuralNetwork([64, 30, 10], mode='classification')
 
-net.SGD(training_data, epochs=100, mini_batch_size=5, eta=3)
+net.SGD(training_data, epochs=30, mini_batch_size=2, eta=3)
 
 print(f'{net.evaluate(test_data)/len(test_data)*100:.1f}% success rate')

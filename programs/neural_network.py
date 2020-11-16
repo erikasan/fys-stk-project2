@@ -135,6 +135,7 @@ class NeuralNetwork:
         self.weights = [w - eta*nw/mini_batch_size for w, nw in zip(self.weights, nabla_w)]
         self.bias    = [b - eta*nb/mini_batch_size for b, nb in zip(self.biases, nabla_b)]
 
+
     def backprop(self, x, y):
         """Docstring to be updated."""
 
@@ -154,8 +155,9 @@ class NeuralNetwork:
 
         nabla_w[-1] = delta@a[-2].T
         nabla_b[-1] = delta
+
         for l in range(self.num_layers-2, 0, -1):
-            delta = self.weights[l].T@delta * self.functions_derivative[l](z[l])
+            delta = self.weights[l].T@delta * self.functions_derivative[l-1](z[l])
             nabla_w[l-1] = delta@a[l-1].T
             nabla_b[l-1] = delta
         return nabla_w, nabla_b
