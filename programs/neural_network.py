@@ -16,7 +16,7 @@ def cross_entropy():
     pass
 
 def cross_entropy_derivative(a, y):
-    return a - y
+    return (a - y)/(a*(1 - a))
 
 
 class NeuralNetwork:
@@ -54,7 +54,7 @@ class NeuralNetwork:
         self.functions_derivative = functions_derivative
 
         if cost_function is None:
-            self.cost_function = cross_entropy
+            self.cost_function   = cross_entropy
             self.cost_derivative = cross_entropy_derivative
 
     def feedforward(self, a):
@@ -125,7 +125,7 @@ class NeuralNetwork:
         nabla_b = [np.zeros(b.shape) for b in self.biases]
 
         a = [x]
-        z = []
+        z = [x]
         for w, b, f in zip(self.weights, self.biases, self.functions):
             z.append(w@a[-1] + b)
             a.append(f(z[-1]))
@@ -133,11 +133,10 @@ class NeuralNetwork:
         delta = self.cost_derivative(a[-1], y)*self.functions_derivative[-1](z[-1])
         nabla_w[-1] = delta@a[-2].T
         nabla_b[-1] = delta
-        for l in range(self.num_layers-3, 0, -1):
-            delta = self.weights[l+1].T@delta * self.functions_derivative[l](z[l])
-            nabla_w[-l] = delta@a[l-1].T
-            nabla_b[-l] = delta
-
+        for l in range(self.num_layers-2, 0, -1):
+            delta = self.weights[l].T@delta * self.functions_derivative[l](z[l])
+            nabla_w[l-1] = delta@a[l-1].T
+            nabla_b[l-1] = delta
         return nabla_w, nabla_b
 
     def predict(self, x):
