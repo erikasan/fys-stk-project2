@@ -96,7 +96,7 @@ class NeuralNetwork:
             a = f(w@a + b)
         return a
 
-    def SGD(self, training_data, epochs, mini_batch_size, eta):
+    def SGD(self, training_data, epochs, mini_batch_size, eta, lmbda=0):
         """Docstring to be updated.
 
         Parameters:
@@ -120,10 +120,10 @@ class NeuralNetwork:
             np.random.shuffle(training_data)
             mini_batches = [training_data[k:k+mini_batch_size] for k in range(0, n, mini_batch_size)]
             for k, mini_batch in enumerate(mini_batches):
-                self.GD(mini_batch, eta)
+                self.GD(mini_batch, eta, len(training_data), lmbda)
             print(f'epoch {j+1}/{epochs} complete')
 
-    def GD(self, mini_batch, eta):
+    def GD(self, mini_batch, eta, n, lmbda=0):
         """Docstring to be updated."""
         mini_batch_size = len(mini_batch)
         nabla_w = [np.zeros(w.shape) for w in self.weights]
@@ -132,7 +132,7 @@ class NeuralNetwork:
             delta_nabla_w, delta_nabla_b = self.backprop(x, y)
             nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
             nabla_b = [nb + dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
-        self.weights = [w - eta*nw/mini_batch_size for w, nw in zip(self.weights, nabla_w)]
+        self.weights = [(1 - eta*lmbda/n)*w - eta*nw/mini_batch_size for w, nw in zip(self.weights, nabla_w)]
         self.bias    = [b - eta*nb/mini_batch_size for b, nb in zip(self.biases, nabla_b)]
 
 
