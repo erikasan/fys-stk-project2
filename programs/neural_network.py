@@ -164,7 +164,7 @@ class NeuralNetwork:
 
     def predict(self, x):
         a = self.feedforward(x)
-        return np.argmax(a, axis = 0)
+        return np.argmax(a, axis=0)
 
     def evaluate(self, test_data):
         test_results = [(self.predict(x), y) for x, y in test_data]
