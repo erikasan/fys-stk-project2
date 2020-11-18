@@ -235,7 +235,7 @@ class GDRegressor(StatisticalMetrics):
         self._batch_size = batch_size
         self._fit_intercept = fit_intercept
 
-    def fit(self, X, y, weights="uniform", method="BGD"):
+    def fit(self, X, y, weights="uniform", seed_val=None, method="BGD"):
         """
         Fit the model
         ----------
@@ -244,6 +244,9 @@ class GDRegressor(StatisticalMetrics):
         self.data = X
         self.target = y
         self._method = method
+
+        if seed_val is not None:
+            np.random.seed(seed_val)
 
         # check if X is 1D or 2D array
         if len(self.data.shape) == 1:  # find shape of array
