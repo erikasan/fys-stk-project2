@@ -26,7 +26,6 @@ def prepare_data(x, y, z):
     training_data = [(i, o) for i, o in zip(input_data, output_data)]
     return input_data, output_data, training_data
 
-
 x = np.random.random(5000)
 y = np.random.random(5000)
 z = FrankeFunction(x, y)
@@ -40,7 +39,7 @@ if max_z > 1:
 x_train, x_test, y_train, y_test, z_train, z_test = train_test_split(x, y, z, train_size=0.8)
 
 input_train, output_train, training_data = prepare_data(x_train, y_train, z_train)
-input_test, output_test, testing_data = prepare_data(x_test, y_test, z_test)
+input_test, output_test, testing_data    = prepare_data(x_test, y_test, z_test)
 
 layers = [2, 30, 1] # Input layer must be 2 nodes, output layer must be 1 node, since Franke is F : R^2 -> R^1
                     # Anything inbetween is arbitrary
