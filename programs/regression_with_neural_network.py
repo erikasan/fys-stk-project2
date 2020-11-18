@@ -26,8 +26,8 @@ def prepare_data(x, y, z):
     training_data = [(i, o) for i, o in zip(input_data, output_data)]
     return input_data, output_data, training_data
 
-x = np.random.random(5000)
-y = np.random.random(5000)
+x = np.random.random(1000)
+y = np.random.random(1000)
 z = FrankeFunction(x, y)
 
 min_z, max_z = np.min(z), np.max(z)
@@ -44,7 +44,8 @@ input_test, output_test, testing_data    = prepare_data(x_test, y_test, z_test)
 layers = [2, 30, 1] # Input layer must be 2 nodes, output layer must be 1 node, since Franke is F : R^2 -> R^1
                     # Anything inbetween is arbitrary
 
-net = NeuralNetwork(layers=layers, mode='regression')
+weights = [np.random.normal(0, 1/m, (m,n)) for m, n in zip(layers[1:], layers[:-1])]
+net = NeuralNetwork(layers=layers, weights=None, mode='regression')
 net.SGD(training_data, epochs=30, mini_batch_size=10, eta=3, lmbda=0)
 
 ztilde  = net.feedforward(input_test)

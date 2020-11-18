@@ -1,7 +1,17 @@
 import numpy as np
 
+def linear(x):
+    return x
+
+def linear_derivative(x):
+    return 1
+
+@np.vectorize
 def sigmoid(x):
-    return 1/(1 + np.exp(-x))
+    if x < 0:
+        return np.exp(x)/(1 + np.exp(x))
+    else:
+        return 1/(1 + np.exp(-x))
 
 def sigmoid_derivative(x):
     return sigmoid(x)*(1 - sigmoid(x))
@@ -70,15 +80,17 @@ class NeuralNetwork:
             assert mode in ['classification', 'regression'], 'mode must be "classification" or "regression"'
 
             if mode == 'classification':
-                functions              = [sigmoid]*(len(layers) - 2)
+                functions              = [sigmoid]*(len(layers) - 1)
                 functions             += [softmax]
-                functions_derivatives  = [sigmoid_derivative]*(len(layers) - 2)
+                functions_derivatives  = [sigmoid_derivative]*(len(layers) - 1)
                 functions_derivatives += [softmax_derivative]
                 cost_derivative        = cross_entropy_derivative
 
             elif mode == 'regression':
                 functions              = [sigmoid]*(len(layers) - 1)
+                functions += [linear]
                 functions_derivatives  = [sigmoid_derivative]*(len(layers) - 1)
+                functions_derivatives += [linear_derivative]
                 cost_derivative        = MSE_derivative
 
         self.mode                  = mode
