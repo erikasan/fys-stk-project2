@@ -77,9 +77,9 @@ class NeuralNetwork:
                 cost_derivative        = cross_entropy_derivative
 
             elif mode == 'regression':
-                functions             = [sigmoid]*(len(layers) - 1)
-                functions_derivatives = [sigmoid_derivative]*(len(layers) - 1)
-                cost_derivative       = MSE_derivative
+                functions              = [sigmoid]*(len(layers) - 1)
+                functions_derivatives  = [sigmoid_derivative]*(len(layers) - 1)
+                cost_derivative        = MSE_derivative
 
         self.mode                  = mode
         self.functions             = functions

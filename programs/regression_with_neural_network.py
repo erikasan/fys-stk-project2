@@ -14,6 +14,7 @@ def prepare_data(x, y, z):
     """Prepare data on a form that the neural network can handle.
        Only works on scalar functions of two variables, e.g. the Frankefunction."""
     assert len(x) == len(y) == len(z), "shape of x, y, z do not match"
+
     input_data = [np.array([i, j]) for i, j in zip(x, y)]
     for arr in input_data:
         arr.shape = (arr.shape[0], 1)
@@ -26,16 +27,22 @@ def prepare_data(x, y, z):
     return input_data, output_data, training_data
 
 
-x = np.random.random(1000)
-y = np.random.random(1000)
+x = np.random.random(5000)
+y = np.random.random(5000)
 z = FrankeFunction(x, y)
+
+min_z, max_z = np.min(z), np.max(z)
+if min_z < 0:
+    z += min_z
+if max_z > 1:
+    z /= max_z
 
 x_train, x_test, y_train, y_test, z_train, z_test = train_test_split(x, y, z, train_size=0.8)
 
 input_train, output_train, training_data = prepare_data(x_train, y_train, z_train)
 input_test, output_test, testing_data = prepare_data(x_test, y_test, z_test)
 
-layers = [2, 20, 1] # Input layer must be 2 nodes, output layer must be 1 node, since Franke is F : R^2 -> R^1
+layers = [2, 30, 1] # Input layer must be 2 nodes, output layer must be 1 node, since Franke is F : R^2 -> R^1
                     # Anything inbetween is arbitrary
 
 net = NeuralNetwork(layers=layers, mode='regression')
