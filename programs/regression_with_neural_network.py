@@ -10,10 +10,6 @@ def FrankeFunction(x, y):
     term4 = - 0.2*np.exp(-(9*x-4)**2 - (9*y-7)**2)
     return term1 + term2 + term3 + term4
 
-x = np.random.random(1000)
-y = np.random.random(1000)
-z = FrankeFunction(x, y)
-
 def prepare_training_data(x, y, z):
     assert len(x) == len(y) == len(z), "shape of x, y, z do not match"
     input_data = [np.array([i, j]) for i, j in zip(x, y)]
@@ -25,14 +21,19 @@ def prepare_training_data(x, y, z):
         arr.shape = (arr.shape[0], 1)
 
     training_data = [(i, o) for i, o in zip(input_data, output_data)]
-    return training_data
+    return input_data, output_data, training_data
 
 
-training_data = prepare_training_data(x, y, z)
+x = np.random.random(1000)
+y = np.random.random(1000)
+z = FrankeFunction(x, y)
+
+input_data, output_data, training_data = prepare_training_data(x, y, z)
 
 layers = [2, 20, 1]
 net = NeuralNetwork(layers=layers, mode='regression')
 net.SGD(training_data, epochs=30, mini_batch_size=10, eta=3, lmbda=0)
+
 
 ztilde  = net.feedforward(input_data)
 ztilde  = ztilde.flatten()
