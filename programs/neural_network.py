@@ -27,7 +27,7 @@ def cross_entropy_derivative(a, y):
 
 class NeuralNetwork:
 
-    def __init__(self, layers, mode='classification'):
+    def __init__(self, layers, weights=None, biases=None, functions=None, functions_derivatives=None, cost_derivative=None, mode='classification'):
         """Initialize a NeuralNetwork object.
 
         Parameters:
@@ -48,30 +48,43 @@ class NeuralNetwork:
         self.layers     = layers
         self.num_layers = len(layers)
 
-        self.weights    = [np.random.randn(m, n) for m, n in zip(layers[1:], layers[:-1])]
-        self.biases     = [0.01*np.ones((m, 1)) for m in layers[1:]]
+        if weights is not None:
+            assert [weights[l].shape == (m, n) for l, (m, n) in enumerate(zip(layers[1:], layers[:-1]))], "weights.shape does not match the network architecture provided by the 'layers' argument"
+            self.weights = weights
+        else:
+            self.weights = [np.random.randn(m, n) for m, n in zip(layers[1:], layers[:-1])]
 
-        assert mode in ['classification', 'regression'], 'mode must be "classification" or "regression"'
+        if biases is not None:
+            assert [biases[l].shape == (m, 1) for l, m in enumerate(layers[1:])], "biases.shape does not match the network architecture provided by the 'layers' argument"
+            self.biases = biases
+        else:
+            self.biases = [0.01*np.ones((m, 1)) for m in layers[1:]]
 
-        if mode == 'classification':
-            functions             = [sigmoid]*(len(layers) - 2)
-            functions            += [softmax]
-            functions_derivative  = [sigmoid_derivative]*(len(layers) - 2)
-            functions_derivative += [softmax_derivative]
-            cost_function         = cross_entropy
-            cost_derivative       = cross_entropy_derivative
+        if functions is not None or functions_derivatives is not None or cost_derivative is not None:
+            assert (functions is not None and functions_derivatives is not None), "functions, functions_derivatives and cost_derivative must be set when using 'custom' mode"
+            assert (len(functions) == self.num_layers-1 and len(functions_derivatives) == self.num_layers-1), "both functions and functions_derivatives must have length len(layers)-1"
 
-        elif mode == 'regression':
-            functions            = [sigmoid]*(len(layers) - 1)
-            functions_derivative = [sigmoid_derivative]*(len(layers) - 1)
-            cost_function        = MSE
-            cost_derivative      = MSE_derivative
+            mode = 'custom'
 
-        self.mode                 = mode
-        self.functions            = functions
-        self.functions_derivative = functions_derivative
-        self.cost_function        = cost_function
-        self.cost_derivative      = cost_derivative
+        else:
+            assert mode in ['classification', 'regression'], 'mode must be "classification" or "regression"'
+
+            if mode == 'classification':
+                functions              = [sigmoid]*(len(layers) - 2)
+                functions             += [softmax]
+                functions_derivatives  = [sigmoid_derivative]*(len(layers) - 2)
+                functions_derivatives += [softmax_derivative]
+                cost_derivative        = cross_entropy_derivative
+
+            elif mode == 'regression':
+                functions             = [sigmoid]*(len(layers) - 1)
+                functions_derivatives = [sigmoid_derivative]*(len(layers) - 1)
+                cost_derivative       = MSE_derivative
+
+        self.mode                  = mode
+        self.functions             = functions
+        self.functions_derivatives = functions_derivatives
+        self.cost_derivative       = cost_derivative
 
 
     def feedforward(self, a):
@@ -151,13 +164,15 @@ class NeuralNetwork:
         if self.mode == 'classification':
             delta = a[-1] - y
         elif self.mode == 'regression':
-            delta = self.cost_derivative(a[-1], y)*self.functions_derivative[-1](z[-1])
+            delta = self.cost_derivative(a[-1], y)*self.functions_derivatives[-1](z[-1])
+        elif self.mode == 'custom':
+            delta = self.cost_derivative(a[-1], y)*self.functions_derivatives[-1](z[-1])
 
         nabla_w[-1] = delta@a[-2].T
         nabla_b[-1] = delta
 
         for l in range(self.num_layers-2, 0, -1):
-            delta = self.weights[l].T@delta * self.functions_derivative[l-1](z[l])
+            delta = self.weights[l].T@delta * self.functions_derivatives[l-1](z[l])
             nabla_w[l-1] = delta@a[l-1].T
             nabla_b[l-1] = delta
         return nabla_w, nabla_b
