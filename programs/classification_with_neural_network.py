@@ -10,15 +10,6 @@ training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
 # test_data = test_data[:100]
 
 
-z_min = np.min(z)
-if z_min < 0:
-    z -= z_min
-
-z_max = np.max(z)
-if z_max > 1:
-    z /= z_max
-
-
 
 @np.vectorize
 def sigmoid(x):
@@ -41,11 +32,16 @@ def relu_derivative(x):
         return 1
 
 def leaky(x):
-    return np.maximum(0.01*x, x)
+    if x < -10:
+        return 0.01*(-10)
+    else:
+        return np.maximum(0.01*x, x)
 
 @np.vectorize
 def leaky_derivative(x):
-    if x <= 0:
+    if x < -10:
+        return 0
+    elif x <= 0:
         return 0.01
     else:
         return 1
