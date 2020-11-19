@@ -6,24 +6,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
-np.random.seed(0)
-
-#import the digits dataset
-digits = datasets.load_digits()
-
-inputs = digits.images
-labels = digits.target
-
-#flatten the image
-n_inputs = len(inputs)
-inputs = inputs.reshape(n_inputs, -1)
-
-
-#split into test and train
-X_train, X_test, y_train, y_test = train_test_split(inputs, labels, train_size=0.8, test_size=0.2)
 
 #calculate accuracy_score when using sklearn
-def sklearnmethod():
+def sklearnmethod(X_train, X_test, y_train, y_test):
     softReg = LogisticRegression(multi_class='multinomial', solver='newton-cg', C =10)
     softReg.fit(X_train, y_train)
     print("Test set accuracy with Logistic Regression: {:.2f}".format(softReg.score(X_test,y_test)))
@@ -35,7 +20,7 @@ def sklearnmethod():
     X_test_scaled = scaler.transform(X_test)
 
     softReg.fit(X_train_scaled, y_train)
-    print("Test set accuracy Logistic Regression with scaled data: {:.5f}".format(softReg.score(X_test_scaled,y_test)))
+    print("Test set accuracy Logistic Regression with scaled data: {:.2f}".format(softReg.score(X_test_scaled,y_test)))
 
 
 #own method for logistic regression
@@ -52,6 +37,7 @@ class MultiClassLogisticRegression():
         return -1*np.mean(y *np.log(p)) #using cross entropy
 
     def fit(self, X, y, epochs=1000, M=128, eta=0.001, lamb = 0):
+        np.random.seed(0)
         self.classes = np.unique(y)
         self.class_labels = {c:i for i,c in enumerate(self.classes)}
         X = np.insert(X, 0, 1, axis =1)
@@ -81,6 +67,23 @@ class MultiClassLogisticRegression():
 
 
 if __name__ == '__main__':
+    
+    np.random.seed(0)
+
+    #import the digits dataset
+    digits = datasets.load_digits()
+
+    inputs = digits.images
+    labels = digits.target
+
+    #flatten the image
+    n_inputs = len(inputs)
+    inputs = inputs.reshape(n_inputs, -1)
+
+
+    #split into test and train
+    X_train, X_test, y_train, y_test = train_test_split(inputs, labels, train_size=0.8, test_size=0.2)
+    
     lr = MultiClassLogisticRegression()
     lr.fit(X_train, y_train)
     y_pred = lr.predict_classes(X_test)
