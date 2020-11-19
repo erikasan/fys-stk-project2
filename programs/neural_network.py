@@ -1,163 +1,198 @@
 import numpy as np
-from copy import copy
 
-sigmoid = lambda x: 1/(1 + np.exp(-x))
+def linear(x):
+    return x
 
-class Layer:
-    """
-    Args:
+def linear_derivative(x):
+    return 1
 
-        n_inputs (int)             - number of inputs
+@np.vectorize
+def sigmoid(x):
+    if x < 0:
+        return np.exp(x)/(1 + np.exp(x))
+    else:
+        return 1/(1 + np.exp(-x))
 
-        n_nodes  (int)             - number of nodes/outputs
+def sigmoid_derivative(x):
+    return sigmoid(x)*(1 - sigmoid(x))
 
-        weights  (numpy.ndarray)   - matrix of weights
-                                     must have shape (n_nodes, n_inputs)
+def softmax(x):
+    return np.exp(x)/np.sum(np.exp(x), axis=0, keepdims=True)
 
-        bias     (numpy.ndarray)   - column vector of biases
-                                     must have shape (n_nodes, 1)
+def softmax_derivative(x):
+    return softmax(x)*(1 - softmax(x))
 
-        activation_func (callable) - activation function of nodes
-                                     default is the sigmoid function
-    """
+def MSE(a, y):
+    return np.sum((a - y)**2)/len(a)
 
-    def __init__(self,
-                 n_inputs,
-                 n_nodes,
-                 weights        =None,
-                 bias           =None,
-                 activation_func=None):
+def MSE_derivative(a, y):
+    return a - y
 
-        self.n_inputs        = n_inputs
-        self.n_nodes         = n_nodes
-        self.weights         = weights
-        self.bias            = bias
-        self.activation_func = activation_func
+def cross_entropy():
+    pass
 
+def cross_entropy_derivative(a, y):
+    return (a - y)/(a*(1 - a))
 
-    def set_weights(self):
-        self.weights = np.random.randn(self.n_nodes, self.n_inputs)
-        return self.weights
-
-
-    def set_bias(self):
-        self.bias = 0.01*np.ones((self.n_nodes, 1))
-        return self.bias
 
 class NeuralNetwork:
-    """
-    Args:
 
-        n_inputs    (int)                       - the number of inputs of the neural network
+    def __init__(self, layers, weights=None, biases=None, functions=None, functions_derivatives=None, cost_derivative=None, mode='classification'):
+        """Initialize a NeuralNetwork object.
 
-        n_outputs   (int)                       - the number of outputs of the neural network
+        Parameters:
 
-        output_func (callable)                  - the output function of the neural network
-                                                  default is the softmax function
+            layers : list of ints
+                List of the number of nodes in each layer. The first and last
+                elements are the number of nodes in the input and output layers respectively.
+                The other elements are the number of nodes in the hidden layers.
 
-        layers      (array-like, Layer)         - array/list of Layer objects
+            functions : list of callables, optional
+                List of the activation function of the nodes in each layer. Must have
+                length len(layers - 1). The first element is the activation function
+                of the first hidden layer, and so on. The last element is the activation
+                function of the output layer. By the default the activation function of the
+                hidden layers is the sigmoid function, while the activation function
+                of the output layer is the softmax function."""
 
-        n_nodes     (array-like, int)           - array/list of the number of nodes
-                                                  the first element is the number of nodes in the first layer
-                                                  the second element is the number of nodes in the second layer, and so on
+        self.layers     = layers
+        self.num_layers = len(layers)
 
-        activation_funcs (array-like, callable) - array/list of functions
-                                                  the first element is the activation function of the first layer
-                                                  the second element is the activation function of the second layer, and so on
-    """
-
-    def __init__(self,
-                 n_nodes,
-                 activation_funcs=None,
-                 output_func=lambda z: np.exp(z)/np.sum(np.exp(z), axis=0, keepdims=True)):
-
-        self.n_nodes          = np.array(n_nodes)
-        self.activation_funcs = activation_funcs
-        self.output_func      = output_func
-
-        if activation_funcs is None:
-            activation_funcs     = len(n_nodes)*[sigmoid]
-            activation_funcs[0]  = lambda x: x
-            activation_funcs[-1] = output_func
-
-        layers = []
-
-        first_layer = Layer(n_inputs=n_nodes[0], n_nodes=n_nodes[0], activation_func=activation_funcs[0])
-        layers.append(first_layer)
-
-        for i in range(1, len(n_nodes)):
-            layer = Layer(n_inputs=n_nodes[i-1], n_nodes=n_nodes[i], activation_func=activation_funcs[i])
-            layers.append(layer)
-
-        self.layers = layers
-
-
-    def set_weights(self):
-        self.weights    = [layer.set_weights() for layer in self.layers]
-        self.weights[0] = np.ones(self.n_nodes[0])
-
-    def set_bias(self):
-        self.bias    = [layer.set_bias() for layer in self.layers]
-        self.bias[0] = np.zeros(self.n_nodes[0])
-
-    def feed_forward(self, X, output_only=True):
-        """
-        Each column of X is a vector of inputs.
-        Returns an activation matrix 'a' where each column is a vector of outputs
-        the corresponding inputs.
-
-        Set output_only=True if you only want the output of the neural network.
-        Set output_false=True to return the activities and activations of all the layers (necessary for backpropagation)
-
-        """
-        X = np.array(X)
-
-        weights = self.weights
-        bias    = self.bias
-
-        a = len(self.layers)*[0]
-        z = len(self.layers)*[0]
-        a[0] = z[0] = X
-
-        for l in range(1, len(self.layers)):
-            layer = self.layers[l]
-            z[l]  = weights[l]@a[l-1] + bias[l]
-            a[l] = layer.activation_func(z[l])
-            if l >= len(self.layers) - 1:
-                break
-
-        if output_only:
-            return a[-1]
+        if weights is not None:
+            assert [weights[l].shape == (m, n) for l, (m, n) in enumerate(zip(layers[1:], layers[:-1]))], "weights.shape does not match the network architecture provided by the 'layers' argument"
+            self.weights = weights
         else:
-            return a, z
+            self.weights = [np.random.randn(m, n) for m, n in zip(layers[1:], layers[:-1])]
+
+        if biases is not None:
+            assert [biases[l].shape == (m, 1) for l, m in enumerate(layers[1:])], "biases.shape does not match the network architecture provided by the 'layers' argument"
+            self.biases = biases
+        else:
+            self.biases = [0.01*np.ones((m, 1)) for m in layers[1:]]
+
+        if functions is not None or functions_derivatives is not None or cost_derivative is not None:
+            assert (functions is not None and functions_derivatives is not None), "functions, functions_derivatives and cost_derivative must be set when using 'custom' mode"
+            assert (len(functions) == self.num_layers-1 and len(functions_derivatives) == self.num_layers-1), "both functions and functions_derivatives must have length len(layers)-1"
+
+            mode = 'custom'
+
+        else:
+            assert mode in ['classification', 'regression'], 'mode must be "classification" or "regression"'
+
+            if mode == 'classification':
+                functions              = [sigmoid]*(len(layers) - 1)
+                functions             += [softmax]
+                functions_derivatives  = [sigmoid_derivative]*(len(layers) - 1)
+                functions_derivatives += [softmax_derivative]
+                cost_derivative        = cross_entropy_derivative
+
+            elif mode == 'regression':
+                functions              = [sigmoid]*(len(layers) - 1)
+                functions += [linear]
+                functions_derivatives  = [sigmoid_derivative]*(len(layers) - 1)
+                functions_derivatives += [linear_derivative]
+                cost_derivative        = MSE_derivative
+
+        self.mode                  = mode
+        self.functions             = functions
+        self.functions_derivatives = functions_derivatives
+        self.cost_derivative       = cost_derivative
 
 
-    def back_propagation(self, X_train, y_train):
+    def feedforward(self, a):
+        """Return the output of the neural network.
 
-        weights_gradient = copy(self.weights)
-        bias_gradient    = copy(self.bias)
-        delta            = copy(self.bias)
+        Parameters:
 
-        L = len(self.layers)
-        a, z = self.feed_forward(X_train, output_only=False)
-        for k in range(X_train.shape[1]):                       # Loop over the data set
-            for j in range(len(a[-1])):                        # Loop over neurons in the last layer
-                delta[-1][j] = a[-1][j] - y_train[j][k]
-                bias_gradient[-1][j] = delta[-1][j]
+            a : ndarray
+                Input column vector. Must have shape (m, 1) where
+                m is the number of nodes in the input layer. Alternatively
+                several inputs can be fed forward simultaneously by providing
+                an ndarray of shape (m, n)
 
-                for n in range(len(self.weights[-1][j])):
-                    weights_gradient[-1][j, n] = delta[-1][j]*a[-2][n]
+        Returns:
 
-            for l in range(L - 2, 1, -1):                       # Loop over the other layers
-                for j in range(len(a[l])):                   # Loop over the neurons
-                    bias_gradient[l][j] = delta[l][j]
+            out : ndarray
+                The output of the neural network. If an input of shape (m, n)
+                is provided, an output of shape (M, n) is given where M is
+                the number of nodes in the output layer."""
 
-                    for n in range(len(self.weights[l][j])):               # Loop over the inputs
-                        weights_gradient[l][j, n] = delta[l][j]*a[l-1][n]
+        for w, b, f in zip(self.weights, self.biases, self.functions):
+            a = f(w@a + b)
+        return a
 
-                    delta[l-1][j] = a[l-1][j]*(1 - a[l-1][j])*np.sum(delta[l+1]*self.weights[l+1][:][j])
+    def SGD(self, training_data, epochs, mini_batch_size, eta, lmbda=0):
+        """Docstring to be updated.
+
+        Parameters:
+
+            training_data : list of tuples of ndarrays
+                List on the form [(x1, y1), (x2, y2), ...] where e.g.
+                x1, y1 are column vectors of an input and the corresponding desired
+                output of the neural network respectively.
+
+            epochs : int
+                The number of epochs.
+
+            mini_batch_size : int
+                The size of each mini_batch.
+
+            eta : int or float
+                The learning rate when applying gradient descent."""
+
+        n = len(training_data)
+        for j in range(epochs):
+            np.random.shuffle(training_data)
+            mini_batches = [training_data[k:k+mini_batch_size] for k in range(0, n, mini_batch_size)]
+            for k, mini_batch in enumerate(mini_batches):
+                self.GD(mini_batch, eta, len(training_data), lmbda)
+            print(f'epoch {j+1}/{epochs} complete')
+
+    def GD(self, mini_batch, eta, n, lmbda=0):
+        """Docstring to be updated."""
+        mini_batch_size = len(mini_batch)
+        nabla_w = [np.zeros(w.shape) for w in self.weights]
+        nabla_b = [np.zeros(b.shape) for b in self.biases]
+        for x, y in mini_batch:
+            delta_nabla_w, delta_nabla_b = self.backprop(x, y)
+            nabla_w = [nw + dnw for nw, dnw in zip(nabla_w, delta_nabla_w)]
+            nabla_b = [nb + dnb for nb, dnb in zip(nabla_b, delta_nabla_b)]
+        self.weights = [(1 - eta*lmbda/n)*w - eta*nw/mini_batch_size for w, nw in zip(self.weights, nabla_w)]
+        self.bias    = [b - eta*nb/mini_batch_size for b, nb in zip(self.biases, nabla_b)]
 
 
-    def predict(self, X):
-        probabilities = self.feed_forward(X)
-        return np.argmax(probabilities, axis = 0)
+    def backprop(self, x, y):
+        """Docstring to be updated."""
+
+        nabla_w = [np.zeros(w.shape) for w in self.weights]
+        nabla_b = [np.zeros(b.shape) for b in self.biases]
+
+        a = [x]
+        z = [x]
+        for w, b, f in zip(self.weights, self.biases, self.functions):
+            z.append(w@a[-1] + b)
+            a.append(f(z[-1]))
+
+        if self.mode == 'classification':
+            delta = a[-1] - y
+        elif self.mode == 'regression':
+            delta = self.cost_derivative(a[-1], y)*self.functions_derivatives[-1](z[-1])
+        elif self.mode == 'custom':
+            delta = self.cost_derivative(a[-1], y)*self.functions_derivatives[-1](z[-1])
+
+        nabla_w[-1] = delta@a[-2].T
+        nabla_b[-1] = delta
+
+        for l in range(self.num_layers-2, 0, -1):
+            delta = self.weights[l].T@delta * self.functions_derivatives[l-1](z[l])
+            nabla_w[l-1] = delta@a[l-1].T
+            nabla_b[l-1] = delta
+        return nabla_w, nabla_b
+
+    def predict(self, x):
+        a = self.feedforward(x)
+        return np.argmax(a, axis=0)
+
+    def evaluate(self, test_data):
+        test_results = [(self.predict(x), y) for x, y in test_data]
+        return np.sum([int(x == y) for x, y in test_results])

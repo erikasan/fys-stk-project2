@@ -4,7 +4,7 @@
 import os
 
 # Set path to save the figures and data files
-FIGURE_PATH = "./Figures"
+FIGURE_PATH = "../Figures"
 
 
 def fig_path(fig_id):
