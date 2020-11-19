@@ -153,3 +153,20 @@ def plot_accuracy_vs_nodes():
     plt.legend()
     plt.tight_layout()
     plt.show()
+
+def accuracy_vs_eta_lambda():
+    layers = [784, 30, 10]
+    # etas =
+    # lmbdas =
+    accuracy = np.zeros((len(eta), len(lmbda)))
+    for i, eta in enumerate(etas):
+        for j, lmbda in enumerate(lmbdas):
+            net = NeuralNetwork(layers=layers, functions=sigmoid_functions, functions_derivatives=sigmoid_derivatives, cost_derivative=cross_entropy_derivative, mode='classification')
+            net.SGD(training_data, epochs=30, mini_batch_size=10, eta=eta, lmbda=lmbda)
+            accuracy[i, j] = net.evaluate(test_data)/len(test_data)*100
+
+    np.save('accuracy_eta_lambda.npy', accuracy)
+
+
+def plot_accuracy_vs_eta_lambda():
+    pass
