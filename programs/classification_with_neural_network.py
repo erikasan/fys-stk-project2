@@ -34,14 +34,25 @@ def sigmoid_derivative(x):
 def relu(x):
     return np.maximum(0, x)
 
+@np.vectorize
 def relu_derivative(x):
-    pass
+    if x < 0:
+        return 0
+    else:
+        return 1
 
 def leaky(x):
     pass
 
 def leaky_derivative(x):
     pass
+
+# For classification only
+def softmax(x):
+    return np.exp(x)/np.sum(np.exp(x), axis=0, keepdims=True)
+# For classification only
+def softmax_derivative(x):
+    return softmax(x)*(1 - softmax(x))
 
 
 sigmoid_functions = []
