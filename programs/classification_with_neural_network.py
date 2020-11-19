@@ -10,7 +10,13 @@ training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
 # test_data = test_data[:100]
 
 
+z_min = np.min(z)
+if z_min < 0:
+    z -= z_min
 
+z_max = np.max(z)
+if z_max > 1:
+    z /= z_max
 
 
 

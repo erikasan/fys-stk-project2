@@ -78,17 +78,17 @@ class NeuralNetwork:
             assert mode in ['classification', 'regression'], 'mode must be "classification" or "regression"'
 
             if mode == 'classification':
-                functions              = [sigmoid]*(len(layers) - 1)
+                functions              = [sigmoid]*(len(layers) - 2)
                 functions             += [softmax]
-                functions_derivatives  = [sigmoid_derivative]*(len(layers) - 1)
+                functions_derivatives  = [sigmoid_derivative]*(len(layers) - 2)
                 functions_derivatives += [softmax_derivative]
                 cost_derivative        = cross_entropy_derivative
 
             elif mode == 'regression':
                 functions              = [sigmoid]*(len(layers) - 1)
-                functions             += [linear]
+                #functions             += [linear]
                 functions_derivatives  = [sigmoid_derivative]*(len(layers) - 1)
-                functions_derivatives += [linear_derivative]
+                #functions_derivatives += [linear_derivative]
                 cost_derivative        = MSE_derivative
 
         self.mode                  = mode
