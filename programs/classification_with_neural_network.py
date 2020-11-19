@@ -32,7 +32,7 @@ def sigmoid_derivative(x):
     return sigmoid(x)*(1 - sigmoid(x))
 
 def relu(x):
-    pass
+    return np.maximum(0, x)
 
 def relu_derivative(x):
     pass
