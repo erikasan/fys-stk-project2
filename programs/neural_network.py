@@ -88,7 +88,7 @@ class NeuralNetwork:
 
             elif mode == 'regression':
                 functions              = [sigmoid]*(len(layers) - 1)
-                functions += [linear]
+                functions             += [linear]
                 functions_derivatives  = [sigmoid_derivative]*(len(layers) - 1)
                 functions_derivatives += [linear_derivative]
                 cost_derivative        = MSE_derivative
