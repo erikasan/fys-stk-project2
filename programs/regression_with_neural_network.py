@@ -40,7 +40,7 @@ input_test, output_test, testing_data    = prepare_data(x_test, y_test, z_test)
 layers = [2, 30, 1] # Input layer must be 2 nodes, output layer must be 1 node, since Franke is F : R^2 -> R^1
                     # Anything inbetween is arbitrary
 
-weights = [np.random.normal(0, 1/m, (m,n)) for m, n in zip(layers[1:], layers[:-1])]
+#weights = [np.random.normal(0, 1/m, (m,n)) for m, n in zip(layers[1:], layers[:-1])]
 net = NeuralNetwork(layers=layers, weights=None, mode='regression')
 net.SGD(training_data, epochs=30, mini_batch_size=10, eta=3, lmbda=0)
 
