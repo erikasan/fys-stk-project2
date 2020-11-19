@@ -30,11 +30,11 @@ x = np.random.random(1000)
 y = np.random.random(1000)
 z = FrankeFunction(x, y)
 
-min_z, max_z = np.min(z), np.max(z)
-if min_z < 0:
-    z += min_z
-if max_z > 1:
-    z /= max_z
+# min_z, max_z = np.min(z), np.max(z)
+# if min_z < 0:
+#     z += min_z
+# if max_z > 1:
+#     z /= max_z
 
 x_train, x_test, y_train, y_test, z_train, z_test = train_test_split(x, y, z, train_size=0.8)
 
