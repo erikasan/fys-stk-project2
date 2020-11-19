@@ -35,7 +35,7 @@ def sklearnmethod():
     X_test_scaled = scaler.transform(X_test)
 
     softReg.fit(X_train_scaled, y_train)
-    print("Test set accuracy Logistic Regression with scaled data: {:.2f}".format(softReg.score(X_test_scaled,y_test)))
+    print("Test set accuracy Logistic Regression with scaled data: {:.5f}".format(softReg.score(X_test_scaled,y_test)))
 
 
 #own method for logistic regression
