@@ -62,7 +62,7 @@ class NeuralNetwork:
             assert [weights[l].shape == (m, n) for l, (m, n) in enumerate(zip(layers[1:], layers[:-1]))], "weights.shape does not match the network architecture provided by the 'layers' argument"
             self.weights = weights
         else:
-            self.weights = [np.random.randn(m, n) for m, n in zip(layers[1:], layers[:-1])]
+            self.weights = [np.random.normal(0, np.sqrt(2/m), (m, n)) for m, n in zip(layers[1:], layers[:-1])]
 
         if biases is not None:
             assert [biases[l].shape == (m, 1) for l, m in enumerate(layers[1:])], "biases.shape does not match the network architecture provided by the 'layers' argument"

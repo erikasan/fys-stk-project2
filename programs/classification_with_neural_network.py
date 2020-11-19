@@ -133,10 +133,10 @@ def accuracy_vs_nodes():
         relu_derivatives   = [relu_derivative]*(len(layers) - 2)
         relu_derivatives  += [softmax_derivative]
 
-        # leaky_functions    = [leaky]*(len(layers) - 2)
-        # leaky_functions   += [softmax]
-        # leaky_derivatives  = [leaky_derivative]*(len(layers) - 2)
-        # leaky_derivatives += [softmax_derivative]
+        leaky_functions    = [leaky]*(len(layers) - 2)
+        leaky_functions   += [softmax]
+        leaky_derivatives  = [leaky_derivative]*(len(layers) - 2)
+        leaky_derivatives += [softmax_derivative]
 
         net = NeuralNetwork(layers=layers, functions=sigmoid_functions, functions_derivatives=sigmoid_derivatives, cost_derivative=cross_entropy_derivative, mode='classification')
         net.SGD(training_data, epochs=30, mini_batch_size=10, eta=3, lmbda=0)
@@ -146,9 +146,9 @@ def accuracy_vs_nodes():
         net.SGD(training_data, epochs=30, mini_batch_size=10, eta=3, lmbda=0)
         relu_accuracy[i] = net.evaluate(test_data)/len(test_data)*100
 
-        # net = NeuralNetwork(layers=layers, functions=leaky_functions, functions_derivatives=leaky_derivatives, cost_derivative=cross_entropy_derivative, mode='classification')
-        # net.SGD(training_data, epochs=30, mini_batch_size=10, eta=3, lmbda=0)
-        # leaky_accuracy[i] = net.evaluate(test_data)/len(test_data)*100
+        net = NeuralNetwork(layers=layers, functions=leaky_functions, functions_derivatives=leaky_derivatives, cost_derivative=cross_entropy_derivative, mode='classification')
+        net.SGD(training_data, epochs=30, mini_batch_size=10, eta=3, lmbda=0)
+        leaky_accuracy[i] = net.evaluate(test_data)/len(test_data)*100
 
     np.save('accuracy_nodes_sigmoid.npy', sigmoid_accuracy)
     np.save('accuracy_nodes_relu.npy',    relu_accuracy)
