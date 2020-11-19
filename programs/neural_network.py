@@ -74,8 +74,6 @@ class NeuralNetwork:
             assert (functions is not None and functions_derivatives is not None), "functions, functions_derivatives and cost_derivative must be set when using 'custom' mode"
             assert (len(functions) == self.num_layers-1 and len(functions_derivatives) == self.num_layers-1), "both functions and functions_derivatives must have length len(layers)-1"
 
-            mode = 'custom'
-
         else:
             assert mode in ['classification', 'regression'], 'mode must be "classification" or "regression"'
 
