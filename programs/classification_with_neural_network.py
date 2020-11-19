@@ -36,16 +36,20 @@ def relu(x):
 
 @np.vectorize
 def relu_derivative(x):
-    if x < 0:
+    if x <= 0:
         return 0
     else:
         return 1
 
 def leaky(x):
-    pass
+    return np.maximum(0.01*x, x)
 
+@np.vectorize
 def leaky_derivative(x):
-    pass
+    if x <= 0:
+        return 0.01
+    else:
+        return 1
 
 # For classification only
 def softmax(x):
