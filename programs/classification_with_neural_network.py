@@ -1,3 +1,4 @@
+from neural_network import NeuralNetwork
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -5,21 +6,13 @@ import seaborn as sns
 import mnist_loader
 training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
 
-training_data = training_data[:1000]
-test_data = test_data[:100]
+# training_data = training_data[:1000]
+# test_data = test_data[:100]
 
 
-from neural_network import NeuralNetwork
 
-# layers = [784, 30, 10]
-#
-#
-#
-# net = NeuralNetwork(layers=layers, mode='classification')
-#
-# net.SGD(training_data, epochs=30, mini_batch_size=10, eta=3, lmbda=0)
-#
-# print(f'{net.evaluate(test_data)/len(test_data)*100:.1f}% success rate')
+
+
 
 @np.vectorize
 def sigmoid(x):
@@ -62,6 +55,21 @@ def cross_entropy_derivative(a, y):
     return (a - y)/(a*(1 - a))
 
 
+sigmoid_functions    = [sigmoid]*(len(layers) - 2)
+sigmoid_functions   += [softmax]
+sigmoid_derivatives  = [sigmoid_derivative]*(len(layers) - 2)
+sigmoid_derivatives += [softmax_derivative]
+
+relu_functions     = [relu]*(len(layers) - 2)
+relu_functions    += [softmax]
+relu_derivatives   = [relu_derivative]*(len(layers) - 2)
+relu_derivatives  += [softmax_derivative]
+
+leaky_functions    = [leaky]*(len(layers) - 2)
+leaky_functions   += [softmax]
+leaky_derivatives  = [leaky_derivative]*(len(layers) - 2)
+leaky_derivatives += [softmax_derivative]
+
 
 def accuracy_vs_hidden_layers():
     num_hidden_layers = np.arange(5)
@@ -73,20 +81,44 @@ def accuracy_vs_hidden_layers():
         layers += i*[30]
         layers += [10]
 
-        sigmoid_functions    = [sigmoid]*(len(layers) - 2)
-        sigmoid_functions   += [softmax]
-        sigmoid_derivatives  = [sigmoid_derivative]*(len(layers) - 2)
-        sigmoid_derivatives += [softmax_derivative]
+        net = NeuralNetwork(layers=layers, functions=sigmoid_functions, functions_derivatives=sigmoid_derivatives, cost_derivative=cross_entropy_derivative, mode='classification')
+        net.SGD(training_data, epochs=30, mini_batch_size=10, eta=3, lmbda=0)
+        sigmoid_accuracy[i] = net.evaluate(test_data)/len(test_data)*100
 
-        relu_functions     = [relu]*(len(layers) - 2)
-        relu_functions    += [softmax]
-        relu_derivatives   = [relu_derivative]*(len(layers) - 2)
-        relu_derivatives  += [softmax_derivative]
+        # net = NeuralNetwork(layers=layers, functions=relu_functions, functions_derivatives=relu_derivatives, cost_derivative=cross_entropy_derivative, mode='classification')
+        # net.SGD(training_data, epochs=30, mini_batch_size=10, eta=3, lmbda=0)
+        # relu_accuracy[i] = net.evaluate(test_data)/len(test_data)*100
+        #
+        # net = NeuralNetwork(layers=layers, functions=leaky_functions, functions_derivatives=leaky_derivatives, cost_derivative=cross_entropy_derivative, mode='classification')
+        # net.SGD(training_data, epochs=30, mini_batch_size=10, eta=3, lmbda=0)
+        # leaky_accuracy[i] = net.evaluate(test_data)/len(test_data)*100
 
-        leaky_functions    = [leaky]*(len(layers) - 2)
-        leaky_functions   += [softmax]
-        leaky_derivatives  = [leaky_derivative]*(len(layers) - 2)
-        leaky_derivatives += [softmax_derivative]
+        print(f'{i+1}/{len(num_hidden_layers)} hidden layers complete')
+
+    np.save('accuracy_hidden_layers_sigmoid.npy', sigmoid_accuracy)
+    # np.save('accuracy_hidden_layers_relu.npy',    relu_accuracy)
+    # np.save('accuracy_hidden_layers_leaky.npy',   leaky_accuracy)
+
+
+def plot_accuracy_vs_hidden_layers():
+    sns.set()
+    num_hidden_layers = np.arange(5)
+    sigmoid_accuracy  = np.load('accuracy_hidden_layers_sigmoid.npy')
+
+    plt.plot(num_hidden_layers, sigmoid_accuracy, 'o-', label='sigmoid')
+    plt.xlabel(r'Number of hidden layers')
+    plt.ylabel(r'Accuracy %')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+def accuracy_vs_nodes():
+    nodes            = 10*np.arange(1, 9)
+    sigmoid_accuracy = np.zeros(len(nodes))
+    relu_accuracy    = np.zeros(len(nodes))
+    leaky_accuracy   = np.zeros(len(nodes))
+    for i, n in enumerate(nodes):
+        layers = [784, n, 10]
 
         net = NeuralNetwork(layers=layers, functions=sigmoid_functions, functions_derivatives=sigmoid_derivatives, cost_derivative=cross_entropy_derivative, mode='classification')
         net.SGD(training_data, epochs=30, mini_batch_size=10, eta=3, lmbda=0)
@@ -100,29 +132,24 @@ def accuracy_vs_hidden_layers():
         net.SGD(training_data, epochs=30, mini_batch_size=10, eta=3, lmbda=0)
         leaky_accuracy[i] = net.evaluate(test_data)/len(test_data)*100
 
-        print(f'{i+1}/{len(num_hidden_layers)} hidden layers complete')
+    np.save('accuracy_nodes_sigmoid.npy', sigmoid_accuracy)
+    np.save('accuracy_nodes_relu.npy',    relu_accuracy)
+    np.save('accuracy_nodes_leaky.npy',   leaky_accuracy)
 
-    np.save('accuracy_hidden_layers_sigmoid.npy', sigmoid_accuracy)
-    np.save('accuracy_hidden_layers_relu.npy',    relu_accuracy)
-    np.save('accuracy_hidden_layers_leaky.npy',   leaky_accuracy)
-
-
-def plot_accuracy_vs_hidden_layers():
-    sns.set()
-    num_hidden_layers = np.arange(5)
-    sigmoid_accuracy  = np.load('accuracy_hidden_layers_sigmoid.npy')
-    relu_accuracy     = np.load('accuracy_hidden_layers_sigmoid.npy')
-    leaky_accuracy    = np.load('accuracy_hidden_layers_sigmoid.npy')
-    plt.plot(num_hidden_layers, sigmoid_accuracy, 'o-', label='sigmoid')
-    plt.plot(num_hidden_layers, relu_accuracy,    'o-', label='relu')
-    plt.plot(num_hidden_layers, leaky_accuracy,   'o-', label='leaky relu')
-    plt.xlabel(r'Number of hidden layers')
-    plt.ylabel(r'Accuracy %')
-    plt.legend()
-    plt.show()
-
-def accuracy_vs_nodes():
-    pass
 
 def plot_accuracy_vs_nodes():
-    pass
+    sns.set()
+    nodes = 10*np.arange(1, 9)
+
+    sigmoid_accuracy  = np.load('accuracy_nodes_sigmoid.npy')
+    relu_accuracy     = np.load('accuracy_nodes_relu.npy')
+    leaky_accuracy    = np.load('accuracy_nodes_leaky.npy')
+
+    plt.plot(nodes, sigmoid_accuracy, '-o', label='sigmoid')
+    plt.plot(nodes, relu_accuracy,    '-o', label='relu')
+    plt.plot(nodes, leaky_accuracy,   '-o', label='leaky relu')
+    plt.xlabel('Number of nodes')
+    plt.ylabel('Accuracy %')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
