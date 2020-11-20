@@ -108,6 +108,8 @@ def MSE_derivative(a, y):
 def MSE_vs_hidden_layers():
     h_layers = np.arange(5)
     accuracy = np.zeros(len(h_layers))
+    relu_accuracy = np.zeros(len(h_layers))
+    leaky_accuracy = np.zeros(len(h_layers))
     for i in h_layers:
         layers = [2]
         layers += i*[30]
@@ -119,18 +121,49 @@ def MSE_vs_hidden_layers():
         z_exact = z_test.flatten()
         accuracy[i] = MSE(z_exact, z_tilde)
 
+        relu_functions     = [relu]*(len(layers) - 2)
+        relu_functions    += [linear]
+        relu_derivatives   = [relu_derivative]*(len(layers) - 2)
+        relu_derivatives  += [linear_derivative]
+
+        NN = NeuralNetwork(layers=layers, functions=relu_functions, functions_derivatives=relu_derivatives, cost_derivative=MSE_derivative, mode='regression')
+        NN.SGD(training_data, epochs=30, mini_batch_size=10, eta=0.3, lmbda=1e-6)
+        z_tilde = NN.feedforward(input_test)
+        z_tilde = z_tilde.flatten()
+        z_exact = z_test.flatten()
+        relu_accuracy[i] = MSE(z_exact, np.nan_to_num(z_tilde))
+
+        leaky_functions    = [leaky]*(len(layers) - 2)
+        leaky_functions   += [linear]
+        leaky_derivatives  = [leaky_derivative]*(len(layers) - 2)
+        leaky_derivatives += [linear_derivative]
+
+        NN = NeuralNetwork(layers=layers, functions=leaky_functions, functions_derivatives=leaky_derivatives, cost_derivative=MSE_derivative, mode='regression')
+        NN.SGD(training_data, epochs=30, mini_batch_size=10, eta=0.3, lmbda=1e-6)
+        z_tilde = NN.feedforward(input_test)
+        z_tilde = z_tilde.flatten()
+        z_exact = z_test.flatten()
+        leaky_accuracy[i] = MSE(z_exact, np.nan_to_num(z_tilde))
+
         print(f'{i+1}/{len(h_layers)} hidden layers complete')
 
     np.save('MSE_hidden_layers.npy', accuracy)
+    np.save('MSE_hidden_relu.npy', relu_accuracy)
+    np.save('MSE_hidden_leaky.npy', leaky_accuracy)
 
 def plot_MSE_vs_hidden_layers():
     h_layers = np.arange(5)
     accuracy = np.load('MSE_hidden_layers.npy')
+    accuracy_relu = np.load('MSE_hidden_relu.npy')
+    accuracy_leaky = np.load('MSE_hidden_leaky.npy')
     plt.figure(figsize=(12, 7))
-    plt.plot(h_layers, accuracy, 'o-')
+    plt.plot(h_layers, accuracy, 'o-', label='sigmoid')
+    plt.plot(h_layers, accuracy_relu, ls='--', label='ReLu')
+    plt.plot(h_layers, accuracy_leaky, ls='-.', label='Leaky ReLu')
     plt.xlabel(r'Number of hidden layers')
     plt.ylabel(r'MSE')
     plt.title('MSE as a function of hidden layers')
+    plt.legend()
     plt.show()
 
 #MSE_vs_hidden_layers()
@@ -143,7 +176,7 @@ def MSE_vs_nodes():
     relu_MSE    = np.zeros(len(nodes))
     leaky_MSE   = np.zeros(len(nodes))
     for i, n in enumerate(nodes):
-        layers = [2, n, 1]
+        layers = [2, n, n, n, 1]
 
         NN = NeuralNetwork(layers=layers, mode='regression')
         NN.SGD(training_data, epochs=30, mini_batch_size=10, eta=0.3, lmbda=1e-5)
@@ -200,8 +233,8 @@ def plot_MSE_vs_nodes():
     plt.tight_layout()
     plt.show()
 
-#MSE_vs_nodes()
-#plot_MSE_vs_nodes()
+MSE_vs_nodes()
+plot_MSE_vs_nodes()
 
 
 def MSE_vs_eta_lambda():
@@ -233,4 +266,4 @@ def plot_MSE_vs_eta_lambda():
     plt.show()
 
 #MSE_vs_eta_lambda()
-plot_MSE_vs_eta_lambda()
+#plot_MSE_vs_eta_lambda()
