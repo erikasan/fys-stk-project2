@@ -112,6 +112,7 @@ def plot_accuracy_vs_hidden_layers():
     plt.plot(num_hidden_layers, sigmoid_accuracy, 'o-', label='sigmoid')
     plt.xlabel(r'Number of hidden layers')
     plt.ylabel(r'Accuracy %')
+    plt.xticks(ticks=range(5), labels=range(5))
     plt.legend()
     plt.title('Accuracy as function of the number of hidden layers')
     plt.tight_layout()
@@ -168,8 +169,8 @@ def plot_accuracy_vs_nodes():
     leaky_accuracy    = np.load('accuracy_nodes_leaky.npy')
 
     plt.plot(nodes, sigmoid_accuracy,'-o',   label='sigmoid')
-    plt.plot(nodes, relu_accuracy,  ls='-.' ,label='relu')
-    plt.plot(nodes, leaky_accuracy,  ls=':', label='leaky relu')
+    # plt.plot(nodes, relu_accuracy,  ls='-.' ,label='relu')
+    # plt.plot(nodes, leaky_accuracy,  ls=':', label='leaky relu')
     plt.xlabel('Number of nodes')
     plt.ylabel('Accuracy %')
     plt.legend()
@@ -177,24 +178,24 @@ def plot_accuracy_vs_nodes():
     plt.tight_layout()
     plt.show()
 
-def accuracy_vs_eta_lambda():
-    layers = [784, 40, 10]
-    etas = np.array([0.05, 0.1, 0.15, 0.2, 0.3])
-    lmbdas = np.array([1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1])
-    accuracy = np.zeros((len(etas), len(lmbdas)))
-
-    sigmoid_functions    = [sigmoid]*(len(layers) - 2)
-    sigmoid_functions   += [softmax]
-    sigmoid_derivatives  = [sigmoid_derivative]*(len(layers) - 2)
-    sigmoid_derivatives += [softmax_derivative]
-
-    for i, eta in enumerate(etas):
-        for j, lmbda in enumerate(lmbdas):
-            net = NeuralNetwork(layers=layers, functions=sigmoid_functions, functions_derivatives=sigmoid_derivatives, cost_derivative=cross_entropy_derivative, mode='classification')
-            net.SGD(training_data, epochs=30, mini_batch_size=10, eta=eta, lmbda=lmbda)
-            accuracy[i, j] = net.evaluate(test_data)/len(test_data)*100
-
-    np.save('accuracy_eta_lambda.npy', accuracy)
+# def accuracy_vs_eta_lambda():
+#     layers = [784, 40, 10]
+#     etas = np.array([0.05, 0.1, 0.15, 0.2, 0.3])
+#     lmbdas = np.array([1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1])
+#     accuracy = np.zeros((len(etas), len(lmbdas)))
+#
+#     sigmoid_functions    = [sigmoid]*(len(layers) - 2)
+#     sigmoid_functions   += [softmax]
+#     sigmoid_derivatives  = [sigmoid_derivative]*(len(layers) - 2)
+#     sigmoid_derivatives += [softmax_derivative]
+#
+#     for i, eta in enumerate(etas):
+#         for j, lmbda in enumerate(lmbdas):
+#             net = NeuralNetwork(layers=layers, functions=sigmoid_functions, functions_derivatives=sigmoid_derivatives, cost_derivative=cross_entropy_derivative, mode='classification')
+#             net.SGD(training_data, epochs=30, mini_batch_size=10, eta=eta, lmbda=lmbda)
+#             accuracy[i, j] = net.evaluate(test_data)/len(test_data)*100
+#
+#     np.save('accuracy_eta_lambda.npy', accuracy)
 
 
 def plot_accuracy_vs_eta_lambda():
@@ -204,7 +205,7 @@ def plot_accuracy_vs_eta_lambda():
     accuracy = np.load('accuracy_eta_lambda.npy')
     acc_df = pd.DataFrame(accuracy, index=etas, columns=lmbdas)
     fig, ax = plt.subplots()
-    ax = sns.heatmap(acc_df, annot = True, cbar_kws={'label': 'MSE'})
+    ax = sns.heatmap(acc_df, annot=True, fmt='.1f',cbar_kws={'label': 'Accuracy %'})
     ax.set_title(r'Accuracy for changing $\lambda$ and $\eta$')
     ax.set_ylabel(r'$\eta$')
     ax.set_xlabel(r'$\lambda$')
